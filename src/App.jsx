@@ -1,5 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
+import Login from './pages/Login'
+import Register from './pages/Register'
 
 const Page = ({ title }) => <h1 className="text-2xl font-bold">{title}</h1>
 
@@ -8,8 +10,8 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Page title="Welcome to KitHuddle" />} />
-        <Route path="/login" element={<Page title="Login" />} />
-        <Route path="/register" element={<Page title="Register" />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<Page title="Profile" />} />
         <Route path="/admin" element={<Page title="Admin" />} />
         <Route path="*" element={<Page title="Page not found" />} />

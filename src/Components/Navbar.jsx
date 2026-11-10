@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { logoutUser } from '../services/authService'
 
 const linkClass = ({ isActive }) =>
   `block rounded px-3 py-2 text-sm font-medium ${
@@ -8,7 +10,15 @@ const linkClass = ({ isActive }) =>
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
+  const { user, profile, isAdmin } = useAuth()
+  const navigate = useNavigate()
   const close = () => setOpen(false)
+
+  async function handleLogout() {
+    close()
+    await logoutUser()
+    navigate('/login')
+  }
 
   return (
     <header className="relative border-b bg-white">
@@ -17,10 +27,7 @@ export default function Navbar() {
           KitHuddle
         </Link>
 
-        <button
-          className="rounded border px-3 py-1 md:hidden"
-          onClick={() => setOpen(!open)}
-        >
+        <button className="rounded border px-3 py-1 md:hidden" onClick={() => setOpen(!open)}>
           Menu
         </button>
 
@@ -29,8 +36,25 @@ export default function Navbar() {
             md:static md:flex md:items-center md:gap-1 md:border-0 md:p-0`}
         >
           <NavLink to="/" end className={linkClass} onClick={close}>Home</NavLink>
-          <NavLink to="/login" className={linkClass} onClick={close}>Login</NavLink>
-          <NavLink to="/register" className={linkClass} onClick={close}>Register</NavLink>
+          {user ? (
+            <>
+              {isAdmin && <NavLink to="/admin" className={linkClass} onClick={close}>Admin</NavLink>}
+              <NavLink to="/profile" className={linkClass} onClick={close}>
+                {profile?.fullName?.split(' ')[0] || 'Profile'}
+              </NavLink>
+              <button
+                onClick={handleLogout}
+                className="block w-full rounded px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 md:w-auto"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/login" className={linkClass} onClick={close}>Login</NavLink>
+              <NavLink to="/register" className={linkClass} onClick={close}>Register</NavLink>
+            </>
+          )}
         </div>
       </nav>
     </header>
