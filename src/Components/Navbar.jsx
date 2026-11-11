@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { logoutUser } from '../services/authService'
 
@@ -22,11 +22,7 @@ export default function Navbar() {
 
   return (
     <header className="relative border-b bg-white">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link to="/" onClick={close} className="text-xl font-bold text-blue-700">
-          KitHuddle
-        </Link>
-
+      <nav className="mx-auto flex max-w-6xl items-center justify-end px-4 py-3">
         <button className="rounded border px-3 py-1 md:hidden" onClick={() => setOpen(!open)}>
           Menu
         </button>
