@@ -36,6 +36,7 @@ export default function Navbar() {
             md:static md:flex md:items-center md:gap-1 md:border-0 md:p-0`}
         >
           <NavLink to="/" end className={linkClass} onClick={close}>Home</NavLink>
+          <NavLink to="/products" className={linkClass} onClick={close}>Shop</NavLink>
           {user ? (
             <>
               {isAdmin && <NavLink to="/admin" className={linkClass} onClick={close}>Admin</NavLink>}
