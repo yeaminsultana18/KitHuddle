@@ -1,59 +1,145 @@
 import { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { logoutUser } from '../services/authService'
+import FilterPanel from './FilterPanel'
+
+const LOGO = '/kithuddle-logo.webp'
+
+const LINKS = [
+  { to: '/products', label: 'New Arrivals' },
+  { to: '/category/football', label: 'Football' },
+  { to: '/category/cricket', label: 'Cricket' },
+  { to: '/category/running', label: 'Running' },
+  { to: '/squad-orders', label: 'Squad Orders' },
+  { to: '/size-guide', label: 'Size Guide' },
+]
 
 const linkClass = ({ isActive }) =>
-  `block rounded px-3 py-2 text-sm font-medium ${
-    isActive ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
+  `block py-2 text-sm font-medium md:py-1 ${
+    isActive ? 'font-semibold text-brand-600 md:border-b-2 md:border-brand-600' : 'text-slate-800 hover:text-brand-600'
   }`
 
+const iconButton = 'flex h-11 w-11 items-center justify-center rounded-full hover:bg-gray-100'
+
 export default function Navbar() {
-  const [open, setOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [term, setTerm] = useState('')
   const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
-  const close = () => setOpen(false)
 
-  async function handleLogout() {
-    close()
-    await logoutUser()
-    navigate('/login')
+  const accountLink = isAdmin ? '/admin' : user ? '/profile' : '/login'
+
+  function closeAll() {
+    setMenuOpen(false)
+    setFilterOpen(false)
+    setSearchOpen(false)
+  }
+
+  function search(e) {
+    e.preventDefault()
+    if (!term.trim()) return
+    closeAll()
+    navigate(`/products?q=${encodeURIComponent(term.trim())}`)
+    setTerm('')
   }
 
   return (
-    <header className="relative border-b bg-white">
-      <nav className="mx-auto flex max-w-6xl items-center justify-end px-4 py-3">
-        <button className="rounded border px-3 py-1 md:hidden" onClick={() => setOpen(!open)}>
-          Menu
-        </button>
+    <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 py-3 md:px-7">
+        <Link to="/" onClick={closeAll} aria-label="KitHuddle home">
+          <img src={LOGO} alt="KitHuddle" className="h-12 w-auto" />
+        </Link>
 
-        <div
-          className={`${open ? 'block' : 'hidden'} absolute left-0 right-0 top-full z-10 border-b bg-white p-2
-            md:static md:flex md:items-center md:gap-1 md:border-0 md:p-0`}
+        <nav
+          aria-label="Categories"
+          className={`${menuOpen ? 'flex' : 'hidden'} absolute left-0 right-0 top-full flex-col border-b border-gray-200 bg-white px-4 pb-4
+            md:static md:flex md:flex-row md:items-center md:gap-7 md:border-0 md:p-0`}
         >
-          <NavLink to="/" end className={linkClass} onClick={close}>Home</NavLink>
-          <NavLink to="/products" className={linkClass} onClick={close}>Shop</NavLink>
-          {user ? (
-            <>
-              {isAdmin && <NavLink to="/admin" className={linkClass} onClick={close}>Admin</NavLink>}
-              <NavLink to="/profile" className={linkClass} onClick={close}>
-                {profile?.fullName?.split(' ')[0] || 'Profile'}
-              </NavLink>
-              <button
-                onClick={handleLogout}
-                className="block w-full rounded px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 md:w-auto"
-              >
-                Log out
-              </button>
-            </>
-          ) : (
-            <>
-              <NavLink to="/login" className={linkClass} onClick={close}>Login</NavLink>
-              <NavLink to="/register" className={linkClass} onClick={close}>Register</NavLink>
-            </>
-          )}
+          {LINKS.map((l) => (
+            <NavLink key={l.to} to={l.to} className={linkClass} onClick={closeAll}>
+              {l.label}
+            </NavLink>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              setFilterOpen(!filterOpen)
+              setSearchOpen(false)
+            }}
+            aria-expanded={filterOpen}
+            className={`mt-2 flex items-center justify-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-semibold md:mt-0 ${
+              filterOpen ? 'border-brand-900 bg-brand-900 text-white' : 'border-slate-300 bg-white'
+            }`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M4 6h16M7 12h10M10 18h4" />
+            </svg>
+            Filter
+          </button>
+        </nav>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Search"
+            className={iconButton}
+            onClick={() => {
+              setSearchOpen(!searchOpen)
+              setFilterOpen(false)
+            }}
+          >
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3.5-3.5" />
+            </svg>
+          </button>
+          <Link to={accountLink} onClick={closeAll} aria-label="Account" className={iconButton}>
+            {user && profile ? (
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
+                {(profile.fullName || 'U').charAt(0).toUpperCase()}
+              </span>
+            ) : (
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c1-4 4.5-6 8-6s7 2 8 6" />
+              </svg>
+            )}
+          </Link>
+          <Link to="/cart" onClick={closeAll} aria-label="Cart" className={iconButton}>
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z" />
+              <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+            </svg>
+          </Link>
+          <button
+            type="button"
+            className="ml-1 rounded-full border border-slate-300 px-3 py-1.5 text-sm font-medium md:hidden"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? 'Close' : 'Menu'}
+          </button>
         </div>
-      </nav>
+      </div>
+
+      {searchOpen && (
+        <form onSubmit={search} className="border-t border-gray-200 bg-white">
+          <div className="mx-auto flex max-w-[1400px] gap-2 px-4 py-4 md:px-7">
+            <input
+              autoFocus
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              placeholder="Search jerseys, boots, bats..."
+              aria-label="Search products"
+              className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5"
+            />
+            <button className="rounded-lg bg-brand-900 px-6 font-semibold text-white">Search</button>
+          </div>
+        </form>
+      )}
+
+      {filterOpen && <FilterPanel onClose={closeAll} />}
     </header>
   )
 }

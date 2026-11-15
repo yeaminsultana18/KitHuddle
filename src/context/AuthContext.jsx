@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../firebase'
-import { getUserProfile } from '../services/authService'
+import { getUserProfile, isStaffRole } from '../services/authService'
 
 const AuthContext = createContext(null)
 
@@ -15,7 +15,6 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    // Runs when the page loads and every time someone logs in or out
     return onAuthStateChanged(auth, async (u) => {
       setUser(u)
       try {
@@ -31,7 +30,8 @@ export function AuthProvider({ children }) {
     user,
     profile,
     loading,
-    isAdmin: profile?.role === 'admin',
+    isAdmin: isStaffRole(profile?.role), // admin or owner
+    isOwner: profile?.role === 'owner',
     refreshProfile,
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
