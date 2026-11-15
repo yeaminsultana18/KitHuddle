@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { updateUserProfile } from '../services/authService'
+import { logoutUser, updateUserProfile } from '../services/authService'
 
 const input = 'mt-1 w-full rounded border px-3 py-2 font-normal'
 const isBdPhone = (p) => /^(?:\+?88)?01[3-9]\d{8}$/.test(p.replace(/[\s-]/g, ''))
@@ -16,6 +17,13 @@ export default function Profile() {
 
 function ProfileForm({ profile }) {
   const { user, refreshProfile } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await logoutUser()
+    navigate('/')
+  }
+
   const [form, setForm] = useState({
     fullName: profile.fullName || '',
     phone: profile.phone || '',
@@ -75,6 +83,13 @@ function ProfileForm({ profile }) {
           {busy ? 'Saving...' : 'Save changes'}
         </button>
       </form>
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="mt-4 w-full rounded-lg border border-red-200 py-2 font-medium text-red-600 hover:bg-red-50"
+      >
+        Log out
+      </button>
     </div>
   )
 }

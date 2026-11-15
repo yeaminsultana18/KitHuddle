@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { formatPrice, getCategories, getProduct } from '../services/productService'
+import { formatPrice, getCategories, getProduct, salePrice } from '../services/productService'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -65,7 +65,15 @@ export default function ProductDetail() {
             {categoryName} · {product.brand}
           </p>
           <h1 className="mt-1 text-2xl font-bold">{product.name}</h1>
-          <p className="mt-2 text-2xl font-bold text-blue-700">{formatPrice(product.price)}</p>
+          <p className="mt-2 flex items-baseline gap-3">
+            <span className="text-3xl font-bold text-brand-600">{formatPrice(salePrice(product))}</span>
+            {product.salePercent > 0 && (
+              <>
+                <span className="text-lg text-slate-500 line-through">{formatPrice(product.price)}</span>
+                <span className="rounded bg-gold px-2 py-0.5 text-sm font-bold text-amber-950">−{product.salePercent}%</span>
+              </>
+            )}
+          </p>
 
           <p className={`mt-2 text-sm font-medium ${outOfStock ? 'text-red-600' : 'text-green-700'}`}>
             {outOfStock ? 'Out of stock' : `In stock: ${product.stock} left`}
