@@ -10,7 +10,7 @@ const SHOES = ['40', '41', '42', '43', '44']
 const picture = (id, name) =>
   USE_LOCAL_IMAGES
     ? [`/products/${id}.jpg`]
-    : [`https://placehold.co/600x600?text=${encodeURIComponent(name)}`]
+    : [`https://placehold.co/600x800?text=${encodeURIComponent(name)}`]
 
 export const categories = [
   { id: 'football', name: 'Football' },
@@ -18,12 +18,15 @@ export const categories = [
   { id: 'running', name: 'Running' },
 ]
 
-const product = (id, name, categoryId, brand, price, stock, sizes, description) => ({
+// salePercent: 0 = full price, 20 = 20% off
+const product = (id, name, categoryId, type, brand, price, salePercent, stock, sizes, description) => ({
   id,
   name,
   categoryId,
+  type,
   brand,
-  price, // in BDT
+  price, // in BDT, before any sale
+  salePercent,
   stock,
   sizes,
   description,
@@ -33,18 +36,18 @@ const product = (id, name, categoryId, brand, price, stock, sizes, description) 
 })
 
 export const products = [
-  product('p01', 'Home Jersey 2026', 'football', 'Apex', 850, 40, APPAREL, 'Lightweight match jersey with breathable mesh panels.'),
-  product('p02', 'Away Jersey 2026', 'football', 'Apex', 850, 40, APPAREL, 'Away colours in the same quick-dry fabric as the home kit.'),
-  product('p03', 'Training Jersey', 'football', 'Nova', 650, 30, APPAREL, 'Everyday training top for hard sessions.'),
-  product('p04', 'Football Shorts', 'football', 'Nova', 450, 35, APPAREL, 'Elastic waist shorts with a drawcord.'),
-  product('p05', 'Firm Ground Boots', 'football', 'Stride', 3200, 15, SHOES, 'Studded boots for grass pitches.'),
-  product('p06', 'Match Football', 'football', 'Apex', 1200, 20, ['Size 5'], 'Size 5 ball, machine stitched.'),
-  product('p07', 'Cricket Jersey', 'cricket', 'Nova', 800, 25, APPAREL, 'Short-sleeve cricket top in team colours.'),
-  product('p08', 'English Willow Bat', 'cricket', 'Apex', 4500, 10, ['Short handle', 'Long handle'], 'Grade 2 willow bat for club players.'),
-  product('p09', 'Batting Gloves', 'cricket', 'Stride', 1100, 0, ['M', 'L'], 'Padded gloves with a breathable palm.'),
-  product('p10', 'Road Running Shoes', 'running', 'Stride', 3800, 12, SHOES, 'Cushioned shoes for daily road runs.'),
-  product('p11', 'Running T-shirt', 'running', 'Nova', 550, 30, APPAREL, 'Light, sweat-wicking tee.'),
-  product('p12', 'Sports Socks (3 pairs)', 'running', 'Nova', 250, 50, ['Free size'], 'Cushioned ankle socks.'),
+  product('p01', 'Home Jersey 2026', 'football', 'Jerseys', 'Apex', 850, 20, 40, APPAREL, 'Lightweight match jersey with breathable mesh panels.'),
+  product('p02', 'Away Jersey 2026', 'football', 'Jerseys', 'Apex', 850, 20, 40, APPAREL, 'Away colours in the same quick-dry fabric as the home kit.'),
+  product('p03', 'Training Jersey', 'football', 'Jerseys', 'Nova', 650, 20, 30, APPAREL, 'Everyday training top for hard sessions.'),
+  product('p04', 'Football Shorts', 'football', 'Shorts', 'Nova', 450, 0, 35, APPAREL, 'Elastic waist shorts with a drawcord.'),
+  product('p05', 'Firm Ground Boots', 'football', 'Boots', 'Stride', 3200, 0, 15, SHOES, 'Studded boots for grass pitches.'),
+  product('p06', 'Match Football', 'football', 'Balls', 'Apex', 1200, 0, 20, ['Size 5'], 'Size 5 ball, machine stitched.'),
+  product('p07', 'Cricket Jersey', 'cricket', 'Jerseys', 'Nova', 800, 0, 25, APPAREL, 'Short-sleeve cricket top in team colours.'),
+  product('p08', 'English Willow Bat', 'cricket', 'Bats', 'Apex', 4500, 0, 10, ['Short handle', 'Long handle'], 'Grade 2 willow bat for club players.'),
+  product('p09', 'Batting Gloves', 'cricket', 'Gloves', 'Stride', 1100, 0, 0, ['M', 'L'], 'Padded gloves with a breathable palm.'),
+  product('p10', 'Road Running Shoes', 'running', 'Shoes', 'Stride', 3800, 0, 12, SHOES, 'Cushioned shoes for daily road runs.'),
+  product('p11', 'Running T-shirt', 'running', 'T-shirts', 'Nova', 550, 0, 30, APPAREL, 'Light, sweat-wicking tee.'),
+  product('p12', 'Sports Socks (3 pairs)', 'running', 'Socks', 'Nova', 250, 0, 50, ['Free size'], 'Cushioned ankle socks.'),
 ]
 
 // Saves everything in one go. Fixed IDs mean running it twice overwrites instead of duplicating.

@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bebas Neue", "Poppins", sans-serif;
+  --color-brand-50: #eef5ff;
+  --color-brand-100: #d9e8ff;
+  --color-brand-300: #8cb8ff;
+  --color-brand-500: #2f7fe0;
+  --color-brand-600: #1f66c9;
+  --color-brand-700: #1a52a3;
+  --color-brand-900: #0f2a56;
+  --color-brand-950: #0b1f42;
+  --color-gold: #f5c451;
+}
+
+body {
+  @apply bg-gray-100 text-slate-800 antialiased;
+}
