@@ -14,6 +14,19 @@ import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ManageAdmins from './pages/admin/ManageAdmins'
 import AdminSeed from './pages/admin/AdminSeed'
+import Cart from './pages/Cart'
+import Checkout from './pages/Checkout'
+import MyOrders from './pages/MyOrders'
+import AdminProducts from './pages/admin/AdminProducts'
+import AdminCategories from './pages/admin/AdminCategories'
+import AdminOrders from './pages/admin/AdminOrders'
+import SquadOrders from './pages/SquadOrders'
+import SquadJoin from './pages/SquadJoin'
+import SquadDashboard from './pages/SquadDashboard'
+import SizeGuide from './pages/SizeGuide'
+import Wishlist from './pages/Wishlist'
+import AdminSquads from './pages/admin/AdminSquads'
+import AdminChats from './pages/admin/AdminChats'
 
 export default function App() {
   return (
@@ -25,12 +38,14 @@ export default function App() {
         <Route path="/category/:categoryId" element={<Collection />} />
         <Route path="/products/:id" element={<ProductDetail />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route
-          path="/cart"
-          element={<ProtectedRoute><ComingSoon title="Your cart" text="The cart and cash-on-delivery checkout arrive in Sprint 3." /></ProtectedRoute>}
-        />
-        <Route path="/squad-orders" element={<ComingSoon title="Squad orders" text="Order matching kits for your whole team with one join code. Coming in Sprint 4." />} />
-        <Route path="/size-guide" element={<ComingSoon title="Size guide" text="Find your size from your height and weight. Coming in Sprint 4." />} />
+        <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+        <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+        <Route path="/orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
+        <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+        <Route path="/squad-orders" element={<SquadOrders />} />
+        <Route path="/squad/join/:code" element={<SquadJoin />} />
+        <Route path="/squads/:id" element={<ProtectedRoute><SquadDashboard /></ProtectedRoute>} />
+        <Route path="/size-guide" element={<SizeGuide />} />
         <Route path="*" element={<ComingSoon title="Page not found" text="We couldn't find that page." />} />
       </Route>
 
@@ -45,9 +60,11 @@ export default function App() {
         <Route index element={<AdminDashboard />} />
         <Route path="admins" element={<ManageAdmins />} />
         <Route path="seed" element={<AdminSeed />} />
-        <Route path="products" element={<ComingSoon title="Products" text="Adding and editing products comes next in Module 3." back="/admin" />} />
-        <Route path="categories" element={<ComingSoon title="Categories" text="Managing categories comes next in Module 3." back="/admin" />} />
-        <Route path="orders" element={<ComingSoon title="Orders" text="Orders appear here once checkout is built in Sprint 3." back="/admin" />} />
+        <Route path="products" element={<AdminProducts />} />
+        <Route path="categories" element={<AdminCategories />} />
+        <Route path="orders" element={<AdminOrders />} />
+        <Route path="squads" element={<AdminSquads />} />
+        <Route path="chats" element={<AdminChats />} />
       </Route>
     </Routes>
   )

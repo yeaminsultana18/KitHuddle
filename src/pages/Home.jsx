@@ -4,17 +4,38 @@ import SportIcon from '../components/SportIcon'
 import { getProducts } from '../services/productService'
 
 const ROWS = [
-  { id: 'football', name: 'Football', tiles: [['Jerseys', 'jersey'], ['Shorts', 'shorts'], ['Boots', 'boot']] },
-  { id: 'cricket', name: 'Cricket', tiles: [['Jerseys', 'jersey'], ['Bats', 'bat'], ['Gloves', 'gloves']] },
-  { id: 'running', name: 'Running', tiles: [['Shoes', 'shoe'], ['T-shirts', 'jersey'], ['Socks', 'socks']] },
+  {
+    id: 'football',
+    name: 'Football',
+    tiles: [['Jerseys', 'jersey'], ['Shorts', 'shorts'], ['Boots', 'boot']],
+    // Pitch green
+    colors: {
+      band: 'bg-gradient-to-br from-emerald-700 to-emerald-900',
+      tiles: ['bg-emerald-100', 'bg-lime-100', 'bg-emerald-50'],
+      icon: 'text-emerald-700',
+      card: 'bg-brand-900 hover:bg-brand-700',
+      accent: 'bg-gold',
+    },
+  },
+  {
+    id: 'cricket',
+    name: 'Cricket',
+    tiles: [['Jerseys', 'jersey'], ['Bats', 'bat'], ['Gloves', 'gloves']],
+    // Cricket-ball red and willow amber
+    colors: {
+      band: 'bg-gradient-to-br from-red-700 to-red-900',
+      tiles: ['bg-amber-100', 'bg-orange-100', 'bg-amber-50'],
+      icon: 'text-red-700',
+      card: 'bg-brand-900 hover:bg-brand-700',
+      accent: 'bg-gold',
+    },
+  },
 ]
-
-const TINTS = ['bg-[#e7eef9]', 'bg-[#eef2f8]', 'bg-[#e3ebf7]']
 
 const INFO = [
   ['Cash on delivery', 'Pay when your kit arrives'],
-  ['Squad orders', 'One join code for the whole team, coming soon'],
-  ['Size advisor', 'The right size from your height and weight, coming soon'],
+  ['Squad orders', 'One join code for the whole team'],
+  ['Size advisor', 'The right size from your height and weight'],
 ]
 
 const glow = { textShadow: '0 0 18px rgba(140,184,255,0.85), 0 0 42px rgba(47,127,224,0.6)' }
@@ -74,10 +95,13 @@ export default function Home() {
 
       {/* One row per sport */}
       {ROWS.map((row) => (
-        <section key={row.id}>
-          <div className="mb-4 flex items-end justify-between">
-            <h2 className="text-3xl font-semibold text-gray-900">{row.name}</h2>
-            <Link to={`/category/${row.id}`} className="text-sm font-medium underline hover:text-brand-600">
+        <section key={row.id} className={`rounded-2xl p-5 shadow-sm md:p-7 ${row.colors.band}`}>
+          <div className="mb-5 flex items-end justify-between">
+            <div>
+              <h2 className="font-display text-5xl tracking-wide text-white">{row.name}</h2>
+              <span className={`mt-1 block h-1 w-16 rounded-full ${row.colors.accent}`} aria-hidden="true" />
+            </div>
+            <Link to={`/category/${row.id}`} className="text-sm font-semibold text-white underline hover:text-gold">
               Explore all
             </Link>
           </div>
@@ -86,9 +110,9 @@ export default function Home() {
               <Link
                 key={label}
                 to={`/category/${row.id}?type=${encodeURIComponent(label)}`}
-                className={`group relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-md ${TINTS[i % 3]}`}
+                className={`group relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-md ${row.colors.tiles[i % 3]}`}
               >
-                <SportIcon name={icon} className="h-28 w-28 text-brand-600 transition duration-300 group-hover:scale-110" />
+                <SportIcon name={icon} className={`h-28 w-28 ${row.colors.icon} transition duration-300 group-hover:scale-110`} />
                 <span
                   className="absolute inset-0 flex items-end p-4 text-xl font-semibold text-white"
                   style={{ background: 'linear-gradient(180deg, rgba(15,42,86,0) 45%, rgba(15,42,86,0.8) 100%)' }}
@@ -99,7 +123,7 @@ export default function Home() {
             ))}
             <Link
               to={`/category/${row.id}`}
-              className="flex aspect-[3/4] flex-col justify-end gap-2 rounded-md bg-brand-900 p-5 text-white hover:bg-brand-700"
+              className={`flex aspect-[3/4] flex-col justify-end gap-2 rounded-md p-5 text-white ${row.colors.card}`}
             >
               <span className="text-sm text-brand-300">
                 {counts[row.id] ? `${counts[row.id]} products` : 'All products'}
@@ -114,9 +138,9 @@ export default function Home() {
       {/* Information strip */}
       <section className="grid gap-4 md:grid-cols-3">
         {INFO.map(([title, text]) => (
-          <div key={title} className="rounded-lg border border-gray-200 bg-white p-5">
-            <p className="font-semibold text-brand-900">{title}</p>
-            <p className="text-sm text-slate-600">{text}</p>
+          <div key={title} className="rounded-lg bg-brand-900 p-5 text-white shadow-sm">
+            <p className="font-semibold text-gold">{title}</p>
+            <p className="text-sm text-brand-100">{text}</p>
           </div>
         ))}
       </section>

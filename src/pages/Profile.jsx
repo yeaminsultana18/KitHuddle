@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { logoutUser, updateUserProfile } from '../services/authService'
 
@@ -83,6 +83,24 @@ function ProfileForm({ profile }) {
           {busy ? 'Saving...' : 'Save changes'}
         </button>
       </form>
+      <Link
+        to="/orders"
+        className="mt-4 block w-full rounded-lg border border-slate-300 py-2 text-center font-medium text-brand-900 hover:border-brand-600"
+      >
+        My orders
+      </Link>
+      <Link
+        to="/wishlist"
+        className="mt-3 block w-full rounded-lg border border-slate-300 py-2 text-center font-medium text-brand-900 hover:border-brand-600"
+      >
+        My wishlist
+      </Link>
+      <Link
+        to="/squad-orders"
+        className="mt-3 block w-full rounded-lg border border-slate-300 py-2 text-center font-medium text-brand-900 hover:border-brand-600"
+      >
+        My squads
+      </Link>
       <button
         type="button"
         onClick={handleLogout}
