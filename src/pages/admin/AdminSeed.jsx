@@ -22,7 +22,7 @@ export default function AdminSeed() {
     <div className="mx-auto max-w-md rounded-lg bg-white p-6 shadow">
       <h1 className="mb-2 text-2xl font-semibold">Seed sample data</h1>
       <p className="mb-4 text-sm text-gray-600">
-        Saves 2 categories (Football, Cricket) and 9 products, and removes the old Running items. Running it again resets them to the sample values.
+        Saves 3 categories and 12 products. Running it again resets them to the sample values.
       </p>
       <button
         onClick={handleSeed}

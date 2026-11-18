@@ -6,6 +6,7 @@ const COLUMNS = [
     links: [
       ['Football', '/category/football'],
       ['Cricket', '/category/cricket'],
+      ['Running', '/category/running'],
     ],
   },
   {

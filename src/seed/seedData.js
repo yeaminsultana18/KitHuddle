@@ -15,6 +15,7 @@ const picture = (id, name) =>
 export const categories = [
   { id: 'football', name: 'Football' },
   { id: 'cricket', name: 'Cricket' },
+  { id: 'running', name: 'Running' },
 ]
 
 // salePercent: 0 = full price, 20 = 20% off
@@ -44,6 +45,9 @@ export const products = [
   product('p07', 'Cricket Jersey', 'cricket', 'Jerseys', 'Nova', 800, 0, 25, APPAREL, 'Short-sleeve cricket top in team colours.'),
   product('p08', 'English Willow Bat', 'cricket', 'Bats', 'Apex', 4500, 0, 10, ['Short handle', 'Long handle'], 'Grade 2 willow bat for club players.'),
   product('p09', 'Batting Gloves', 'cricket', 'Gloves', 'Stride', 1100, 0, 0, ['M', 'L'], 'Padded gloves with a breathable palm.'),
+  product('p10', 'Road Running Shoes', 'running', 'Shoes', 'Stride', 3800, 0, 12, SHOES, 'Cushioned shoes for daily road runs.'),
+  product('p11', 'Running T-shirt', 'running', 'T-shirts', 'Nova', 550, 0, 30, APPAREL, 'Light, sweat-wicking tee.'),
+  product('p12', 'Sports Socks (3 pairs)', 'running', 'Socks', 'Nova', 250, 0, 50, ['Free size'], 'Cushioned ankle socks.'),
 ]
 
 // Saves everything in one go. Fixed IDs mean running it twice overwrites instead of duplicating.
@@ -51,9 +55,6 @@ export async function seedDatabase() {
   const batch = writeBatch(db)
   categories.forEach(({ id, ...data }) => batch.set(doc(db, 'categories', id), data))
   products.forEach(({ id, ...data }) => batch.set(doc(db, 'products', id), data))
-  // Running was removed from the shop: delete its old category and products if they exist
-  batch.delete(doc(db, 'categories', 'running'))
-  ;['p10', 'p11', 'p12'].forEach((id) => batch.delete(doc(db, 'products', id)))
   await batch.commit()
   return { categories: categories.length, products: products.length }
 }
