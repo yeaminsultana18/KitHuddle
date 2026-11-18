@@ -2,17 +2,21 @@ import { collection, doc, getCountFromServer, getDocs, limit, query, updateDoc, 
 import { db } from '../firebase'
 
 export async function getDashboardCounts() {
-  const [products, outOfStock, categories, customers] = await Promise.all([
+  const [products, outOfStock, categories, customers, orders, pendingOrders] = await Promise.all([
     getCountFromServer(collection(db, 'products')),
     getCountFromServer(query(collection(db, 'products'), where('stock', '<=', 0))),
     getCountFromServer(collection(db, 'categories')),
     getCountFromServer(query(collection(db, 'users'), where('role', '==', 'customer'))),
+    getCountFromServer(collection(db, 'orders')),
+    getCountFromServer(query(collection(db, 'orders'), where('status', '==', 'confirmed'))),
   ])
   return {
     products: products.data().count,
     outOfStock: outOfStock.data().count,
     categories: categories.data().count,
     customers: customers.data().count,
+    orders: orders.data().count,
+    pendingOrders: pendingOrders.data().count,
   }
 }
 

@@ -1,6 +1,8 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { logoutUser } from '../../services/authService'
+import NotificationBell from '../../components/NotificationBell'
+import { ADMIN_INBOX } from '../../services/notificationService'
 
 const LINKS = [
   ['/admin', 'Dashboard'],
@@ -50,6 +52,8 @@ export default function AdminLayout() {
             Signed in as <span className="font-semibold text-brand-900">{profile?.fullName}</span>
           </p>
           <div className="flex items-center gap-3">
+            {/* New-order notifications for every admin */}
+            <NotificationBell inbox={ADMIN_INBOX} dark />
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isOwner ? 'bg-amber-100 text-amber-900' : 'bg-brand-50 text-brand-700'}`}>
               {isOwner ? 'Owner' : 'Admin'}
             </span>
