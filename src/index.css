@@ -15,8 +15,5 @@
 }
 
 body {
-  @apply text-slate-800 antialiased;
-  /* Light sporty blue with soft diagonal stripes, so the shop is not plain white */
-  background-color: #e4ecf8;
-  background-image: repeating-linear-gradient(135deg, rgba(31, 102, 201, 0.05) 0 24px, transparent 24px 48px);
+  @apply bg-gray-100 text-slate-800 antialiased;
 }
