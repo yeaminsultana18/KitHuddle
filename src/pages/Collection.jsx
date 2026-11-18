@@ -10,6 +10,13 @@ const SORTS = {
   name: 'Name: A to Z',
 }
 
+// Header colours for each sport's page
+const BANDS = {
+  football: 'bg-gradient-to-r from-emerald-700 to-emerald-900',
+  cricket: 'bg-gradient-to-r from-red-700 to-red-900',
+  all: 'bg-gradient-to-r from-brand-700 to-brand-900',
+}
+
 export default function Collection() {
   const { categoryId } = useParams()
   const [params, setParams] = useSearchParams()
@@ -94,20 +101,20 @@ export default function Collection() {
         <span className="text-gray-900">{title}</span>
       </nav>
 
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className={`flex flex-wrap items-end justify-between gap-4 rounded-2xl p-6 text-white shadow-sm ${BANDS[categoryId] || BANDS.all}`}>
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">{title}</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <h1 className="font-display text-5xl tracking-wide">{title}</h1>
+          <p className="mt-1 text-sm text-white/85">
             {shown.length} {shown.length === 1 ? 'product' : 'products'}
             {base.some((p) => p.salePercent > 0) && ' · Sale prices on selected items'}
           </p>
         </div>
-        <label className="flex items-center gap-3 text-sm font-semibold text-slate-700">
+        <label className="flex items-center gap-3 text-sm font-semibold text-white">
           Sort by
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal"
+            className="rounded-lg border border-white/40 bg-white px-3 py-2 font-normal text-slate-800"
           >
             {Object.entries(SORTS).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
