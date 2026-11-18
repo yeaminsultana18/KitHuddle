@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
 import { formatPrice, getCategories, getProduct, salePrice } from '../services/productService'
 
 export default function ProductDetail() {
   const { id } = useParams()
   const { user } = useAuth()
+  const { addToCart } = useCart()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -15,6 +17,7 @@ export default function ProductDetail() {
   const [error, setError] = useState('')
   const [size, setSize] = useState('')
   const [note, setNote] = useState('')
+  const [added, setAdded] = useState(false)
 
   useEffect(() => {
     Promise.all([getProduct(id), getCategories()])
@@ -45,8 +48,13 @@ export default function ProductDetail() {
       // Not logged in: go to login, then come back to this product
       return navigate('/login', { state: { from: location.pathname } })
     }
-    if (!size) return setNote('Please choose a size first.')
-    setNote(`You chose size ${size}. The cart is added in Module 4.`)
+    if (!size) {
+      setAdded(false)
+      return setNote('Please choose a size first.')
+    }
+    const result = addToCart(product, size, salePrice(product))
+    setAdded(result.ok)
+    setNote(result.message)
   }
 
   return (
@@ -92,6 +100,7 @@ export default function ProductDetail() {
                   onClick={() => {
                     setSize(s)
                     setNote('')
+                    setAdded(false)
                   }}
                   className={`rounded border px-4 py-2 text-sm font-medium disabled:opacity-40 ${
                     size === s ? 'border-blue-600 bg-blue-600 text-white' : 'bg-white hover:border-blue-600'
@@ -111,7 +120,12 @@ export default function ProductDetail() {
             {outOfStock ? 'Out of stock' : user ? 'Add to cart' : 'Log in to add to cart'}
           </button>
 
-          {note && <p className="mt-3 text-sm text-gray-700">{note}</p>}
+          {note && (
+            <p role="status" className={`mt-3 text-sm ${added ? 'text-green-700' : 'text-gray-700'}`}>
+              {note}{' '}
+              {added && <Link to="/cart" className="font-semibold text-brand-600 underline">View cart</Link>}
+            </p>
+          )}
         </div>
       </div>
     </div>

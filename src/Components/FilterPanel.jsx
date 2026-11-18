@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 const CATEGORIES = [
   { id: 'football', name: 'Football' },
   { id: 'cricket', name: 'Cricket' },
-  { id: 'running', name: 'Running' },
 ]
 
 const input = 'w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal'
