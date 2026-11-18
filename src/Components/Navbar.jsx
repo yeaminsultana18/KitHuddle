@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
 import FilterPanel from './FilterPanel'
+import NotificationBell from './NotificationBell'
 
 const LOGO = '/kithuddle-logo.webp'
 
@@ -9,7 +11,6 @@ const LINKS = [
   { to: '/products', label: 'New Arrivals' },
   { to: '/category/football', label: 'Football' },
   { to: '/category/cricket', label: 'Cricket' },
-  { to: '/category/running', label: 'Running' },
   { to: '/squad-orders', label: 'Squad Orders' },
   { to: '/size-guide', label: 'Size Guide' },
 ]
@@ -27,6 +28,7 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [term, setTerm] = useState('')
   const { user, profile, isAdmin } = useAuth()
+  const { count } = useCart()
   const navigate = useNavigate()
 
   const accountLink = isAdmin ? '/admin' : user ? '/profile' : '/login'
@@ -46,7 +48,11 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
+    <header className="sticky top-0 z-30 bg-white shadow-sm">
+      <p className="bg-brand-900 px-4 py-1.5 text-center text-xs font-medium tracking-wide text-white">
+        <span className="text-gold">Cash on delivery</span> all over Bangladesh · Squad orders up to{' '}
+        <span className="text-gold">15% off</span>
+      </p>
       <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 py-3 md:px-7">
         <Link to="/" onClick={closeAll} aria-label="KitHuddle home">
           <img src={LOGO} alt="KitHuddle" className="h-12 w-auto" />
@@ -107,11 +113,23 @@ export default function Navbar() {
               </svg>
             )}
           </Link>
-          <Link to="/cart" onClick={closeAll} aria-label="Cart" className={iconButton}>
+          {/* Customers get order notifications here (admins see theirs in the Admin portal) */}
+          {user && !isAdmin && <NotificationBell inbox={user.uid} />}
+          <Link
+            to="/cart"
+            onClick={closeAll}
+            aria-label={count > 0 ? `Cart, ${count} items` : 'Cart'}
+            className={`relative ${iconButton}`}
+          >
             <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
               <path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z" />
               <path d="M9 8V6a3 3 0 0 1 6 0v2" />
             </svg>
+            {count > 0 && (
+              <span className="absolute right-0.5 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-600 px-1 text-[11px] font-bold text-white">
+                {count > 99 ? '99+' : count}
+              </span>
+            )}
           </Link>
           <button
             type="button"
@@ -140,6 +158,7 @@ export default function Navbar() {
       )}
 
       {filterOpen && <FilterPanel onClose={closeAll} />}
+      <div className="h-1 bg-gradient-to-r from-brand-600 via-gold to-emerald-500" aria-hidden="true" />
     </header>
   )
 }
