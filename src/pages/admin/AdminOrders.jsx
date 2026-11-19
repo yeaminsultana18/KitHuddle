@@ -103,6 +103,9 @@ export default function AdminOrders() {
                 <td className="px-4 py-3">
                   <p className="font-semibold">{orderCode(o.id)}</p>
                   <p className="text-xs text-slate-500">{dateText(o)}</p>
+                  {o.type === 'squad' && (
+                    <p className="mt-1 inline-block rounded bg-brand-900 px-2 py-0.5 text-xs font-semibold text-white">Squad: {o.squadName}</p>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <p className="font-medium">{o.customerName}</p>
@@ -114,9 +117,18 @@ export default function AdminOrders() {
                   {o.items.map((item, i) => (
                     <p key={i}>{item.name} ({item.size}) × {item.quantity}</p>
                   ))}
+                  {o.jerseys && (
+                    <details className="mt-1 text-xs">
+                      <summary className="cursor-pointer font-semibold text-brand-600">Jersey prints ({o.jerseys.length})</summary>
+                      {o.jerseys.map((j) => (
+                        <p key={j.jerseyNumber}>#{j.jerseyNumber} {j.jerseyName} · {j.size}</p>
+                      ))}
+                    </details>
+                  )}
                 </td>
                 <td className="px-4 py-3 font-bold text-brand-900">
                   {formatPrice(o.total)}
+                  {o.discountPercent > 0 && <p className="text-xs font-normal text-green-800">{o.discountPercent}% squad discount</p>}
                 </td>
                 <td className="px-4 py-3">
                   <label htmlFor={`status-${o.id}`} className="sr-only">Status for order {orderCode(o.id)}</label>

@@ -89,6 +89,18 @@ function ProfileForm({ profile }) {
       >
         My orders
       </Link>
+      <Link
+        to="/wishlist"
+        className="mt-3 block w-full rounded-lg border border-slate-300 py-2 text-center font-medium text-brand-900 hover:border-brand-600"
+      >
+        My wishlist
+      </Link>
+      <Link
+        to="/squad-orders"
+        className="mt-3 block w-full rounded-lg border border-slate-300 py-2 text-center font-medium text-brand-900 hover:border-brand-600"
+      >
+        My squads
+      </Link>
       <button
         type="button"
         onClick={handleLogout}

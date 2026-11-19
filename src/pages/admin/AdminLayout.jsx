@@ -9,6 +9,8 @@ const LINKS = [
   ['/admin/products', 'Products'],
   ['/admin/categories', 'Categories'],
   ['/admin/orders', 'Orders'],
+  ['/admin/squads', 'Squad orders'],
+  ['/admin/chats', 'Customer chat'],
   ['/admin/admins', 'Admins'],
   ['/admin/seed', 'Sample data'],
 ]

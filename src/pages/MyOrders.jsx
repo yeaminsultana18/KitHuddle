@@ -52,6 +52,7 @@ export default function MyOrders() {
               <div>
                 <p className="font-bold text-brand-900">
                   Order {orderCode(order.id)}
+                  {order.type === 'squad' && <span className="ml-2 text-sm font-semibold text-brand-600">Squad: {order.squadName}</span>}
                 </p>
                 <p className="text-sm text-slate-600">{dateText(order)} · Cash on delivery</p>
               </div>
@@ -66,6 +67,9 @@ export default function MyOrders() {
                 </li>
               ))}
             </ul>
+            {order.discountPercent > 0 && (
+              <p className="mt-2 text-sm text-green-800">Squad discount: {order.discountPercent}%</p>
+            )}
             <div className="mt-3 flex justify-between border-t border-slate-100 pt-3 font-bold">
               <span>Total</span>
               <span className="text-brand-900">{formatPrice(order.total)}</span>

@@ -20,6 +20,13 @@ import MyOrders from './pages/MyOrders'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminCategories from './pages/admin/AdminCategories'
 import AdminOrders from './pages/admin/AdminOrders'
+import SquadOrders from './pages/SquadOrders'
+import SquadJoin from './pages/SquadJoin'
+import SquadDashboard from './pages/SquadDashboard'
+import SizeGuide from './pages/SizeGuide'
+import Wishlist from './pages/Wishlist'
+import AdminSquads from './pages/admin/AdminSquads'
+import AdminChats from './pages/admin/AdminChats'
 
 export default function App() {
   return (
@@ -34,8 +41,11 @@ export default function App() {
         <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
-        <Route path="/squad-orders" element={<ComingSoon title="Squad orders" text="Order matching kits for your whole team with one join code. Coming in Sprint 4." />} />
-        <Route path="/size-guide" element={<ComingSoon title="Size guide" text="Find your size from your height and weight. Coming in Sprint 4." />} />
+        <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+        <Route path="/squad-orders" element={<SquadOrders />} />
+        <Route path="/squad/join/:code" element={<SquadJoin />} />
+        <Route path="/squads/:id" element={<ProtectedRoute><SquadDashboard /></ProtectedRoute>} />
+        <Route path="/size-guide" element={<SizeGuide />} />
         <Route path="*" element={<ComingSoon title="Page not found" text="We couldn't find that page." />} />
       </Route>
 
@@ -53,6 +63,8 @@ export default function App() {
         <Route path="products" element={<AdminProducts />} />
         <Route path="categories" element={<AdminCategories />} />
         <Route path="orders" element={<AdminOrders />} />
+        <Route path="squads" element={<AdminSquads />} />
+        <Route path="chats" element={<AdminChats />} />
       </Route>
     </Routes>
   )
