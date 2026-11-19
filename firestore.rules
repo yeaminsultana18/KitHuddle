@@ -97,5 +97,74 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+
+    // Module 6: each customer's wishlist (users/{uid}/wishlist/{productId})
+    match /users/{uid}/wishlist/{productId} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Module 5: squad orders
+    match /squads/{squadId} {
+      function squadOpen() {
+        return get(/databases/$(database)/documents/squads/$(squadId)).data.status == 'open'
+          && get(/databases/$(database)/documents/squads/$(squadId)).data.deadline > request.time;
+      }
+      function isCaptain() {
+        return signedIn() && get(/databases/$(database)/documents/squads/$(squadId)).data.captainId == request.auth.uid;
+      }
+
+      // Anyone with the code can see the squad (no account needed to join)
+      allow read: if true;
+
+      // A signed-in captain creates an open squad
+      allow create: if signedIn()
+        && request.resource.data.captainId == request.auth.uid
+        && request.resource.data.status == 'open';
+
+      // The captain closes it when placing the order; admins can change anything
+      allow update: if (signedIn() && resource.data.captainId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'orderId'])
+          && request.resource.data.status == 'ordered')
+        || isAdmin();
+
+      allow delete: if isAdmin();
+
+      // Members: the document id is the jersey number, so a number can only be taken once
+      match /members/{number} {
+        allow read: if true;
+        allow create: if squadOpen()
+          && request.resource.data.jerseyNumber == number
+          && request.resource.data.name is string && request.resource.data.name.size() > 0
+          && request.resource.data.jerseyName is string && request.resource.data.jerseyName.size() <= 12;
+        allow delete: if (isCaptain() && squadOpen()) || isAdmin();
+      }
+
+      // Members' phone numbers: only the captain and admins can read them
+      match /contacts/{number} {
+        allow read: if isCaptain() || isAdmin();
+        allow create: if squadOpen()
+          && existsAfter(/databases/$(database)/documents/squads/$(squadId)/members/$(number));
+        allow delete: if isCaptain() || isAdmin();
+      }
+    }
+
+    // Help chat for the whole shop: chats/{chatId}
+    //   signed-in customers: chatId = their uid
+    //   guests: chatId = "guest-" + 32 random letters/numbers kept in their browser (works like a secret key)
+    // Admins are the moderators.
+    match /chats/{chatId} {
+      function guestChat() { return chatId.matches('guest-[0-9a-f]{32}'); }
+      function myChat() { return signedIn() && request.auth.uid == chatId; }
+
+      allow get: if guestChat() || myChat() || isAdmin();
+      allow list: if isAdmin(); // only admins see the list of all chats
+      allow create, update: if guestChat() || myChat() || isAdmin();
+
+      match /messages/{messageId} {
+        allow read: if guestChat() || myChat() || isAdmin();
+        allow create: if ((guestChat() || myChat()) && request.resource.data.from == 'user')
+          || (isAdmin() && request.resource.data.from == 'admin');
+      }
+    }
   }
 }

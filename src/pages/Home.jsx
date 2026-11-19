@@ -34,8 +34,8 @@ const ROWS = [
 
 const INFO = [
   ['Cash on delivery', 'Pay when your kit arrives'],
-  ['Squad orders', 'One join code for the whole team, coming soon'],
-  ['Size advisor', 'The right size from your height and weight, coming soon'],
+  ['Squad orders', 'One join code for the whole team'],
+  ['Size advisor', 'The right size from your height and weight'],
 ]
 
 const glow = { textShadow: '0 0 18px rgba(140,184,255,0.85), 0 0 42px rgba(47,127,224,0.6)' }
