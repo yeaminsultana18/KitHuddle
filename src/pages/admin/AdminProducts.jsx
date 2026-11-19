@@ -9,6 +9,7 @@ import {
   updateProduct,
 } from '../../services/productService'
 import { authErrorMessage } from '../../services/authService'
+import { chartToText, textToChart } from '../../services/sizeService'
 
 const input = 'mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-normal'
 
@@ -23,6 +24,7 @@ const EMPTY_FORM = {
   sizes: 'S, M, L, XL',
   imageUrl: '',
   description: '',
+  sizeChart: '',
 }
 
 // Turns a product from the database into form values (all text)
@@ -37,6 +39,7 @@ const productToForm = (p) => ({
   sizes: (p.sizes || []).join(', '),
   imageUrl: p.imageUrls?.[0] || '',
   description: p.description || '',
+  sizeChart: chartToText(p.sizeChart),
 })
 
 export default function AdminProducts() {
@@ -100,6 +103,8 @@ export default function AdminProducts() {
     }
     if (!Number.isInteger(stock) || stock < 0) return setMessage({ type: 'error', text: 'Stock must be a whole number, 0 or more.' })
     if (sizes.length === 0) return setMessage({ type: 'error', text: 'Enter at least one size.' })
+    const parsed = textToChart(form.sizeChart)
+    if (parsed.error) return setMessage({ type: 'error', text: parsed.error })
 
     const data = {
       name: form.name.trim(),
@@ -112,6 +117,7 @@ export default function AdminProducts() {
       sizes,
       imageUrls: [form.imageUrl.trim() || placeholderImage(form.name.trim())],
       description: form.description.trim(),
+      sizeChart: parsed.chart, // empty = S/M/L/XL products use the default chart
     }
 
     setBusy(true)
@@ -259,6 +265,13 @@ export default function AdminProducts() {
             <label className="block text-sm font-semibold text-slate-700">
               Description
               <textarea name="description" rows="2" value={form.description} onChange={update} className={input} />
+            </label>
+            <label className="block text-sm font-semibold text-slate-700">
+              Size chart (optional)
+              <span className="block text-xs font-normal text-slate-500">
+                One line per size: size, min height, max height (cm), min weight, max weight (kg). Leave empty to use the default S–XL chart.
+              </span>
+              <textarea name="sizeChart" rows="4" value={form.sizeChart} onChange={update} placeholder={'S, 150, 165, 40, 58\nM, 165, 175, 58, 70'} className={`${input} font-mono`} />
             </label>
             <div className="flex gap-3">
               <button disabled={busy} className="flex-1 rounded-lg bg-brand-600 py-2.5 font-semibold text-white disabled:opacity-60">
