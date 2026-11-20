@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import SportIcon from '../components/SportIcon'
+import useCategories from '../hooks/useCategories'
 import { getProducts } from '../services/productService'
 
 const ROWS = [
@@ -32,6 +33,28 @@ const ROWS = [
   },
 ]
 
+// Colours for a category an admin adds later (it has no special design yet)
+const NEW_CATEGORY_COLORS = {
+  band: 'bg-gradient-to-br from-brand-700 to-brand-900',
+  tiles: ['bg-brand-100', 'bg-sky-100', 'bg-brand-50'],
+  icon: 'text-brand-700',
+  card: 'bg-brand-950 hover:bg-brand-700',
+  accent: 'bg-gold',
+}
+
+// Picks an icon from a product type, e.g. "Running Shoes" -> shoe
+function iconFor(type) {
+  const t = type.toLowerCase()
+  if (t.includes('jersey') || t.includes('shirt')) return 'jersey'
+  if (t.includes('short')) return 'shorts'
+  if (t.includes('boot')) return 'boot'
+  if (t.includes('shoe')) return 'shoe'
+  if (t.includes('sock')) return 'socks'
+  if (t.includes('glove')) return 'gloves'
+  if (t.includes('bat')) return 'bat'
+  return 'ball'
+}
+
 const INFO = [
   ['Cash on delivery', 'Pay when your kit arrives'],
   ['Squad orders', 'One join code for the whole team'],
@@ -42,16 +65,42 @@ const glow = { textShadow: '0 0 18px rgba(140,184,255,0.85), 0 0 42px rgba(47,12
 
 export default function Home() {
   const [counts, setCounts] = useState({})
+  const [types, setTypes] = useState({}) // product types in each category
+  const categories = useCategories()
 
   useEffect(() => {
     getProducts()
       .then((products) => {
         const c = {}
-        products.forEach((p) => (c[p.categoryId] = (c[p.categoryId] || 0) + 1))
+        const t = {}
+        products.forEach((p) => {
+          c[p.categoryId] = (c[p.categoryId] || 0) + 1
+          if (p.type) {
+            t[p.categoryId] = t[p.categoryId] || []
+            if (!t[p.categoryId].includes(p.type)) t[p.categoryId].push(p.type)
+          }
+        })
         setCounts(c)
+        setTypes(t)
       })
       .catch(() => {}) // the page still works without the counts
   }, [])
+
+  // One row per category in the database. Football and Cricket keep their own
+  // design; a new category gets the blue design and tiles from its product types.
+  const rows =
+    categories.length === 0
+      ? ROWS
+      : categories.map((c) => {
+          const preset = ROWS.find((r) => r.id === c.id)
+          if (preset) return { ...preset, name: c.name }
+          return {
+            id: c.id,
+            name: c.name,
+            tiles: (types[c.id] || []).slice(0, 3).map((type) => [type, iconFor(type)]),
+            colors: NEW_CATEGORY_COLORS,
+          }
+        })
 
   return (
     <div className="space-y-14">
@@ -94,7 +143,7 @@ export default function Home() {
       </section>
 
       {/* One row per sport */}
-      {ROWS.map((row) => (
+      {rows.map((row) => (
         <section key={row.id} className={`rounded-2xl p-5 shadow-sm md:p-7 ${row.colors.band}`}>
           <div className="mb-5 flex items-end justify-between">
             <div>

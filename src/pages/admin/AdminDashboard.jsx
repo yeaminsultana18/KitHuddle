@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import useCategories from '../../hooks/useCategories'
 import { getDashboardCounts } from '../../services/adminService'
 
 export default function AdminDashboard() {
   const { profile } = useAuth()
   const [counts, setCounts] = useState(null)
   const [error, setError] = useState('')
+  const categories = useCategories()
 
   useEffect(() => {
     getDashboardCounts().then(setCounts).catch(() => setError('Could not load the numbers.'))
@@ -14,7 +16,7 @@ export default function AdminDashboard() {
 
   const cards = [
     ['Products', counts?.products, counts ? `${counts.outOfStock} out of stock` : ''],
-    ['Categories', counts?.categories, 'Football, Cricket'],
+    ['Categories', counts?.categories, categories.map((c) => c.name).join(', ')],
     ['Customers', counts?.customers, 'Registered accounts'],
     ['Orders', counts?.orders, counts ? `${counts.pendingOrders} confirmed, waiting to ship` : ''],
   ]
@@ -42,7 +44,7 @@ export default function AdminDashboard() {
         <h2 className="mb-4 font-semibold text-brand-900">Quick actions</h2>
         <div className="flex flex-wrap gap-3">
           <Link to="/admin/admins" className="rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white">Manage admins</Link>
-          <Link to="/admin/seed" className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-brand-900">Reset sample products</Link>
+          
           <Link to="/admin/products" className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-brand-900">Products</Link>
           <Link to="/admin/orders" className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-brand-900">Orders</Link>
         </div>

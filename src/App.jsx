@@ -13,7 +13,7 @@ import AdminSetup from './pages/admin/AdminSetup'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ManageAdmins from './pages/admin/ManageAdmins'
-import AdminSeed from './pages/admin/AdminSeed'
+
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import MyOrders from './pages/MyOrders'
@@ -59,7 +59,7 @@ export default function App() {
       <Route path="/admin" element={<ProtectedRoute role="admin"><AdminLayout /></ProtectedRoute>}>
         <Route index element={<AdminDashboard />} />
         <Route path="admins" element={<ManageAdmins />} />
-        <Route path="seed" element={<AdminSeed />} />
+       
         <Route path="products" element={<AdminProducts />} />
         <Route path="categories" element={<AdminCategories />} />
         <Route path="orders" element={<AdminOrders />} />

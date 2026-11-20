@@ -12,7 +12,7 @@ const LINKS = [
   ['/admin/squads', 'Squad orders'],
   ['/admin/chats', 'Customer chat'],
   ['/admin/admins', 'Admins'],
-  ['/admin/seed', 'Sample data'],
+  
 ]
 
 export default function AdminLayout() {

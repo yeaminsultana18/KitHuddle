@@ -1,10 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-
-const CATEGORIES = [
-  { id: 'football', name: 'Football' },
-  { id: 'cricket', name: 'Cricket' },
-]
+import useCategories from '../hooks/useCategories'
 
 const input = 'w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-normal'
 
@@ -15,6 +11,7 @@ export default function FilterPanel({ onClose }) {
   const [max, setMax] = useState(params.get('max') || '')
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const categories = useCategories()
 
   const toggle = (id) => setCats(cats.includes(id) ? cats.filter((c) => c !== id) : [...cats, id])
 
@@ -44,7 +41,7 @@ export default function FilterPanel({ onClose }) {
         <fieldset>
           <legend className="mb-2 text-sm font-semibold text-slate-700">Category</legend>
           <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <label
                 key={c.id}
                 className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${

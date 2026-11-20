@@ -1,13 +1,8 @@
 import { Link } from 'react-router-dom'
-
-const COLUMNS = [
-  {
-    title: 'Shop',
-    links: [
-      ['Football', '/category/football'],
-      ['Cricket', '/category/cricket'],
-    ],
-  },
+import useCategories from '../hooks/useCategories'
+ 
+// The Shop column is filled from the database inside the component
+const OTHER_COLUMNS = [
   {
     title: 'Information',
     links: [
@@ -25,8 +20,14 @@ const COLUMNS = [
     ],
   },
 ]
-
+ 
 export default function Footer() {
+  const categories = useCategories()
+  const columns = [
+    { title: 'Shop', links: categories.map((c) => [c.name, `/category/${c.id}`]) },
+    ...OTHER_COLUMNS,
+  ]
+ 
   return (
     <footer className="mt-16 bg-brand-950 text-slate-300">
       <div className="mx-auto grid max-w-[1400px] gap-8 px-4 py-11 text-sm md:grid-cols-4 md:px-7">
@@ -37,7 +38,7 @@ export default function Footer() {
           </p>
           <p className="mt-3 leading-relaxed">Sports kits for you and your whole team.</p>
         </div>
-        {COLUMNS.map((col) => (
+        {columns.map((col) => (
           <div key={col.title}>
             <p className="mb-3 font-semibold text-white">{col.title}</p>
             <ul className="space-y-2">
@@ -56,3 +57,4 @@ export default function Footer() {
     </footer>
   )
 }
+ 

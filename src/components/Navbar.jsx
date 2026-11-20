@@ -2,15 +2,14 @@ import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import useCategories from '../hooks/useCategories'
 import FilterPanel from './FilterPanel'
 import NotificationBell from './NotificationBell'
 
 const LOGO = '/kithuddle-logo.webp'
 
-const LINKS = [
-  { to: '/products', label: 'New Arrivals' },
-  { to: '/category/football', label: 'Football' },
-  { to: '/category/cricket', label: 'Cricket' },
+const FIRST_LINKS = [{ to: '/products', label: 'New Arrivals' }]
+const LAST_LINKS = [
   { to: '/squad-orders', label: 'Squad Orders' },
   { to: '/size-guide', label: 'Size Guide' },
 ]
@@ -30,6 +29,14 @@ export default function Navbar() {
   const { user, profile, isAdmin } = useAuth()
   const { count } = useCart()
   const navigate = useNavigate()
+  const categories = useCategories()
+
+  // New Arrivals, then one link per category from the database, then the rest
+  const links = [
+    ...FIRST_LINKS,
+    ...categories.map((c) => ({ to: `/category/${c.id}`, label: c.name })),
+    ...LAST_LINKS,
+  ]
 
   const accountLink = isAdmin ? '/admin' : user ? '/profile' : '/login'
 
@@ -63,7 +70,7 @@ export default function Navbar() {
           className={`${menuOpen ? 'flex' : 'hidden'} absolute left-0 right-0 top-full flex-col border-b border-gray-200 bg-white px-4 pb-4
             md:static md:flex md:flex-row md:items-center md:gap-7 md:border-0 md:p-0`}
         >
-          {LINKS.map((l) => (
+          {links.map((l) => (
             <NavLink key={l.to} to={l.to} className={linkClass} onClick={closeAll}>
               {l.label}
             </NavLink>
