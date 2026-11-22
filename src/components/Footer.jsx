@@ -51,9 +51,7 @@ export default function Footer() {
           </div>
         ))}
       </div>
-      <div className="border-t border-white/10 py-4 text-center text-xs text-slate-400">
-        © 2026 KitHuddle · Group 02, Department of CSE, East West University · We accept cash on delivery
-      </div>
+      
     </footer>
   )
 }
