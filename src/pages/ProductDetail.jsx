@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
-import { formatPrice, getCategories, getProduct, salePrice } from '../services/productService'
+import { formatPrice, getCategories, getProduct, salePrice, stockOfSize } from '../services/productService'
 import { addToWishlist, isInWishlist, removeFromWishlist } from '../services/wishlistService'
 import { chartFor } from '../services/sizeService'
 import SizeAdvisor from '../components/SizeAdvisor'
@@ -51,6 +51,18 @@ export default function ProductDetail() {
   }
 
   const outOfStock = product.stock <= 0
+  const soldOut = (s) => stockOfSize(product, s) <= 0
+  const leftInSize = size ? stockOfSize(product, size) : null
+
+  function pickSize(s) {
+    setNote('')
+    setAdded(false)
+    if (soldOut(s)) {
+      setSize('')
+      return setNote(`Size ${s} is sold out.`)
+    }
+    setSize(s)
+  }
 
   async function toggleWishlist() {
     if (!user) return navigate('/login', { state: { from: location.pathname } })
@@ -71,6 +83,10 @@ export default function ProductDetail() {
     if (!size) {
       setAdded(false)
       return setNote('Please choose a size first.')
+    }
+    if (soldOut(size)) {
+      setAdded(false)
+      return setNote(`Size ${size} is sold out.`)
     }
     const result = addToCart(product, size, salePrice(product))
     setAdded(result.ok)
@@ -136,9 +152,7 @@ export default function ProductDetail() {
                 <SizeAdvisor
                   product={product}
                   onPick={(s) => {
-                    setSize(s)
-                    setNote('')
-                    setAdded(false)
+                    pickSize(s)
                     setShowAdvisor(false)
                   }}
                 />
@@ -149,13 +163,11 @@ export default function ProductDetail() {
                 <button
                   key={s}
                   type="button"
-                  disabled={outOfStock}
-                  onClick={() => {
-                    setSize(s)
-                    setNote('')
-                    setAdded(false)
-                  }}
-                  className={`rounded border px-4 py-2 text-sm font-medium disabled:opacity-40 ${
+                  disabled={outOfStock || soldOut(s)}
+                  onClick={() => pickSize(s)}
+                  aria-label={soldOut(s) ? `${s}, sold out` : s}
+                  title={soldOut(s) ? 'Sold out' : undefined}
+                  className={`rounded border px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 disabled:line-through ${
                     size === s ? 'border-blue-600 bg-blue-600 text-white' : 'bg-white hover:border-blue-600'
                   }`}
                 >
@@ -163,6 +175,11 @@ export default function ProductDetail() {
                 </button>
               ))}
             </div>
+            {leftInSize > 0 && (
+              <p className={`mt-2 text-sm font-medium ${leftInSize <= 3 ? 'text-amber-700' : 'text-green-700'}`}>
+                Only {leftInSize} left in {size}
+              </p>
+            )}
           </div>
 
           <button

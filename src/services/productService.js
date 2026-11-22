@@ -35,6 +35,12 @@ export const salePrice = (product) =>
 
 export const formatPrice = (amount) => `৳${Number(amount).toLocaleString('en-BD')}`
 
+// How many are left in one size.
+// New products keep sizeStock (e.g. { S: 5, M: 3 }); old products only have a total
+// `stock`, so for them every size shares that total.
+export const stockOfSize = (product, size) =>
+  product.sizeStock ? product.sizeStock[size] ?? 0 : product.stock ?? 0
+
 // ---- Module 3: admins manage products ----
 
 // A grey placeholder picture when the admin gives no image link

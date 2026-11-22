@@ -20,7 +20,7 @@ const EMPTY_FORM = {
   brand: '',
   price: '',
   salePercent: '0',
-  stock: '',
+  sizeStock: {}, // size -> count, as text while typing, e.g. { S: '5', M: '3' }
   sizes: 'S, M, L, XL',
   imageUrl: '',
   description: '',
@@ -35,7 +35,8 @@ const productToForm = (p) => ({
   brand: p.brand || '',
   price: String(p.price ?? ''),
   salePercent: String(p.salePercent ?? 0),
-  stock: String(p.stock ?? ''),
+  // Old products have no sizeStock: the boxes start empty and the admin splits the old total
+  sizeStock: Object.fromEntries(Object.entries(p.sizeStock || {}).map(([size, count]) => [size, String(count)])),
   sizes: (p.sizes || []).join(', '),
   imageUrl: p.imageUrls?.[0] || '',
   description: p.description || '',
@@ -53,6 +54,8 @@ export default function AdminProducts() {
   const [formOpen, setFormOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
+  // The sizes typed in the Sizes field; there is one stock box for each
+  const formSizes = form.sizes.split(',').map((s) => s.trim()).filter(Boolean)
   function load() {
     return Promise.all([getProducts(), getCategories()])
       .then(([p, c]) => {
@@ -85,6 +88,7 @@ export default function AdminProducts() {
   }
 
   const update = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  const updateSizeStock = (size, value) => setForm({ ...form, sizeStock: { ...form.sizeStock, [size]: value } })
 
   async function handleSave(e) {
     e.preventDefault()
@@ -93,16 +97,30 @@ export default function AdminProducts() {
     // Check the form
     const price = Number(form.price)
     const salePercent = Number(form.salePercent || 0)
-    const stock = Number(form.stock)
-    const sizes = form.sizes.split(',').map((s) => s.trim()).filter(Boolean)
+    const sizes = formSizes
     if (!form.name.trim()) return setMessage({ type: 'error', text: 'Enter the product name.' })
     if (!form.categoryId) return setMessage({ type: 'error', text: 'Choose a category.' })
     if (!(price > 0)) return setMessage({ type: 'error', text: 'Price must be more than 0.' })
     if (!Number.isInteger(salePercent) || salePercent < 0 || salePercent > 90) {
       return setMessage({ type: 'error', text: 'Sale % must be a whole number from 0 to 90.' })
     }
-    if (!Number.isInteger(stock) || stock < 0) return setMessage({ type: 'error', text: 'Stock must be a whole number, 0 or more.' })
     if (sizes.length === 0) return setMessage({ type: 'error', text: 'Enter at least one size.' })
+    // The Firestore rules check at most 12 sizes when a customer orders, so a product can have no more
+    if (sizes.length > 12) return setMessage({ type: 'error', text: 'A product can have at most 12 sizes.' })
+    if (new Set(sizes).size !== sizes.length) return setMessage({ type: 'error', text: 'Each size must appear only once.' })
+
+    // One stock count per size (only the sizes in the Sizes field are saved)
+    const sizeStock = {}
+    for (const size of sizes) {
+      const text = String(form.sizeStock[size] ?? '').trim()
+      const count = Number(text)
+      if (text === '' || !Number.isInteger(count) || count < 0) {
+        return setMessage({ type: 'error', text: `Stock for size ${size} must be a whole number, 0 or more.` })
+      }
+      sizeStock[size] = count
+    }
+    // The total is kept too, so badges and the dashboard still work
+    const stock = Object.values(sizeStock).reduce((sum, n) => sum + n, 0)
     const parsed = textToChart(form.sizeChart)
     if (parsed.error) return setMessage({ type: 'error', text: parsed.error })
 
@@ -114,6 +132,7 @@ export default function AdminProducts() {
       price: Math.round(price),
       salePercent,
       stock,
+      sizeStock,
       sizes,
       imageUrls: [form.imageUrl.trim() || placeholderImage(form.name.trim())],
       description: form.description.trim(),
@@ -201,6 +220,11 @@ export default function AdminProducts() {
                   </td>
                   <td className={`px-4 py-3 font-semibold ${p.stock <= 0 ? 'text-red-700' : 'text-green-800'}`}>
                     {p.stock <= 0 ? 'Out of stock' : p.stock}
+                    {p.sizeStock && (
+                      <p className="text-xs font-normal text-slate-500">
+                        {(p.sizes || []).map((s) => `${s} ${p.sizeStock[s] ?? 0}`).join(' · ')}
+                      </p>
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <button onClick={() => startEditing(p)} className="rounded-lg border border-slate-300 px-3 py-1.5 hover:border-brand-600">
@@ -245,11 +269,7 @@ export default function AdminProducts() {
                 Sale %
                 <input name="salePercent" type="number" min="0" max="90" value={form.salePercent} onChange={update} className={input} />
               </label>
-              <label className="block text-sm font-semibold text-slate-700">
-                Stock
-                <input name="stock" type="number" min="0" value={form.stock} onChange={update} className={input} />
-              </label>
-              <label className="block text-sm font-semibold text-slate-700">
+              <label className="col-span-2 block text-sm font-semibold text-slate-700">
                 Brand
                 <input name="brand" value={form.brand} onChange={update} className={input} />
               </label>
@@ -258,6 +278,26 @@ export default function AdminProducts() {
               Sizes (comma separated)
               <input name="sizes" value={form.sizes} onChange={update} className={input} />
             </label>
+            <fieldset>
+              <legend className="text-sm font-semibold text-slate-700">Stock per size</legend>
+              <div className="mt-1 grid grid-cols-4 gap-2">
+                {formSizes.map((size) => (
+                  <label key={size} className="block text-xs font-semibold text-slate-600">
+                    {size}
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.sizeStock[size] ?? ''}
+                      onChange={(e) => updateSizeStock(size, e.target.value)}
+                      className={input}
+                    />
+                  </label>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                Total: {formSizes.reduce((sum, s) => sum + (Number(form.sizeStock[s]) || 0), 0)}
+              </p>
+            </fieldset>
             <label className="block text-sm font-semibold text-slate-700">
               Image link (optional)
               <input name="imageUrl" value={form.imageUrl} onChange={update} placeholder="https://..." className={input} />

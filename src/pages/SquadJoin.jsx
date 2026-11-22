@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import SizeAdvisor from '../components/SizeAdvisor'
-import { getProduct } from '../services/productService'
+import { getProduct, stockOfSize } from '../services/productService'
 import {
   findSquadByCode,
   isSquadOpen,
@@ -60,6 +60,22 @@ export default function SquadJoin() {
   const deadlineText = squad.deadline?.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
   const update = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
+  // Kits still free in a size: the stock minus the members who already chose it
+  // (joining does not lower the stock; the captain's order does).
+  // Old products only have a total, shared by every member.
+  function freeInSize(s) {
+    if (!kit) return Infinity // kit not loaded yet: do not block anyone
+    if (kit.sizeStock) return stockOfSize(kit, s) - members.filter((m) => m.size === s).length
+    return (kit.stock ?? 0) - members.length
+  }
+  const sizeFull = (s) => freeInSize(s) <= 0
+
+  function pickSize(s) {
+    if (sizeFull(s)) return setError(`Size ${s} has run out for this squad. Choose another size.`)
+    setError('')
+    setForm({ ...form, size: s })
+  }
+
   async function handleJoin(e) {
     e.preventDefault()
     setError('')
@@ -67,6 +83,7 @@ export default function SquadJoin() {
     if (!form.name.trim()) return setError('Enter your name.')
     if (!isBdPhone(form.phone)) return setError('Enter a mobile number like 01712345678.')
     if (!form.size) return setError('Choose your size.')
+    if (sizeFull(form.size)) return setError(`Size ${form.size} has just run out for this squad. Choose another size.`)
     if (!form.jerseyName.trim()) return setError('Enter the name to print on your jersey.')
     if (form.jerseyName.trim().length > 12) return setError('The jersey name can have at most 12 letters.')
     if (!Number.isInteger(number) || number < 1 || number > 99) return setError('Jersey number must be from 1 to 99.')
@@ -146,7 +163,7 @@ export default function SquadJoin() {
                   <SizeAdvisor
                     product={kit}
                     onPick={(s) => {
-                      setForm({ ...form, size: s })
+                      pickSize(s)
                       setShowAdvisor(false)
                     }}
                   />
@@ -157,8 +174,11 @@ export default function SquadJoin() {
                   <button
                     key={s}
                     type="button"
-                    onClick={() => setForm({ ...form, size: s })}
-                    className={`h-11 min-w-12 rounded-lg border px-3 font-semibold ${form.size === s ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 bg-white'}`}
+                    onClick={() => pickSize(s)}
+                    disabled={sizeFull(s)}
+                    aria-label={sizeFull(s) ? `${s}, sold out` : s}
+                    title={sizeFull(s) ? 'Sold out' : undefined}
+                    className={`h-11 min-w-12 rounded-lg border px-3 font-semibold disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 disabled:line-through ${form.size === s ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 bg-white'}`}
                   >
                     {s}
                   </button>

@@ -38,15 +38,37 @@ export const isFinalStatus = (status) => status === 'delivered' || status === 'c
 // A short code to show people, e.g. "KH-4F2A9C"
 export const orderCode = (id) => `KH-${id.slice(0, 6).toUpperCase()}`
 
+// Groups order lines by product, then by size, e.g. { abc123: { S: 2, M: 1 } }
+function countBySize(lines) {
+  const counts = {}
+  lines.forEach((line) => {
+    counts[line.productId] = counts[line.productId] || {}
+    counts[line.productId][line.size] = (counts[line.productId][line.size] || 0) + line.quantity
+  })
+  return counts
+}
+
+const sumOf = (bySize) => Object.values(bySize).reduce((sum, n) => sum + n, 0)
+
+// The new stock fields after taking sizes away (sign = -1) or putting them back (sign = +1).
+// Products with sizeStock change each size and the total is worked out again from the sizes.
+// Old products (no sizeStock) only change the total.
+// Also used by squadService for squad orders.
+export function changedStock(product, bySize, sign) {
+  if (!product.sizeStock) return { stock: (product.stock ?? 0) + sign * sumOf(bySize) }
+  const sizeStock = { ...product.sizeStock }
+  Object.entries(bySize).forEach(([size, count]) => {
+    sizeStock[size] = (sizeStock[size] ?? 0) + sign * count
+  })
+  return { sizeStock, stock: sumOf(sizeStock) }
+}
+
 // Places a cash-on-delivery order.
 // Everything happens in one transaction: the stock is checked again, the stock goes down,
 // the order is saved and the admins get a notification. If anything fails, nothing is saved.
 export async function placeOrder({ userId, customer, cartItems }) {
-  // How many of each product the cart needs (two sizes of one product count together)
-  const needed = {}
-  cartItems.forEach((item) => {
-    needed[item.productId] = (needed[item.productId] || 0) + item.quantity
-  })
+  // How many of each size of each product the cart needs, e.g. { abc123: { S: 2, M: 1 } }
+  const needed = countBySize(cartItems)
   const productIds = Object.keys(needed)
 
   const orderRef = doc(collection(db, 'orders'))
@@ -64,12 +86,28 @@ export async function placeOrder({ userId, customer, cartItems }) {
         throw new Error('A product in your cart is no longer sold. Please remove it from your cart.')
       }
       const product = snap.data()
-      if (product.stock < needed[snap.id]) {
-        throw new Error(
-          product.stock <= 0
-            ? `${product.name} is now out of stock. Please remove it from your cart.`
-            : `Only ${product.stock} left of ${product.name}. Please lower the quantity.`,
-        )
+      if (product.sizeStock) {
+        // Check every exact size
+        Object.entries(needed[snap.id]).forEach(([size, count]) => {
+          const left = product.sizeStock[size] ?? 0
+          if (left < count) {
+            throw new Error(
+              left <= 0
+                ? `${product.name} in size ${size} is now sold out. Please remove it from your cart.`
+                : `Only ${left} left of ${product.name} in size ${size}. Please lower the quantity.`,
+            )
+          }
+        })
+      } else {
+        // Old product: only a total, shared by all sizes
+        const total = sumOf(needed[snap.id])
+        if ((product.stock ?? 0) < total) {
+          throw new Error(
+            product.stock <= 0
+              ? `${product.name} is now out of stock. Please remove it from your cart.`
+              : `Only ${product.stock} left of ${product.name}. Please lower the quantity.`,
+          )
+        }
       }
       prices[snap.id] = salePrice(product)
     })
@@ -85,9 +123,9 @@ export async function placeOrder({ userId, customer, cartItems }) {
     }))
     const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
 
-    // 4. Lower the stock
+    // 4. Lower the stock of each size (and the total)
     snaps.forEach((snap) => {
-      tx.update(snap.ref, { stock: snap.data().stock - needed[snap.id] })
+      tx.update(snap.ref, changedStock(snap.data(), needed[snap.id], -1))
     })
 
     // 5. Save the order
@@ -184,16 +222,13 @@ export async function updateOrderStatus(order, newStatus) {
     if (!orderSnap.exists()) throw new Error('This order no longer exists.')
     if (orderSnap.data().status === 'cancelled') throw new Error('This order is already cancelled.')
 
-    // How many of each product to put back
-    const back = {}
-    orderSnap.data().items.forEach((item) => {
-      back[item.productId] = (back[item.productId] || 0) + item.quantity
-    })
+    // How many of each size of each product to put back
+    const back = countBySize(orderSnap.data().items)
     const productIds = Object.keys(back)
     const snaps = await Promise.all(productIds.map((id) => tx.get(doc(db, 'products', id))))
 
     snaps.forEach((snap) => {
-      if (snap.exists()) tx.update(snap.ref, { stock: snap.data().stock + back[snap.id] })
+      if (snap.exists()) tx.update(snap.ref, changedStock(snap.data(), back[snap.id], +1))
     })
     tx.update(orderRef, { status: 'cancelled', updatedAt: serverTimestamp() })
     tx.set(noteRef, note)

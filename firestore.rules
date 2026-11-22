@@ -46,12 +46,46 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
 
-      // Module 4: a signed-in customer placing an order may LOWER the stock, and change nothing else
+      // Module 4: a signed-in customer placing an order (or a squad captain) may LOWER the stock,
+      // and change nothing else.
+
+      // The total goes down and never below 0
+      function stockLowered() {
+        return request.resource.data.stock is int
+          && request.resource.data.stock >= 0
+          && request.resource.data.stock < resource.data.stock;
+      }
+
+      // Size number i of the old sizeStock may stay the same or go down, never below 0.
+      // Rules have no loops, so this is checked for i = 0 to 11 (products have at most 12 sizes).
+      function sizeLowered(i) {
+        return i >= resource.data.sizeStock.size()
+          || countLowered(resource.data.sizeStock.keys()[i]);
+      }
+      function countLowered(size) {
+        let newCount = request.resource.data.sizeStock[size];
+        return newCount is int && newCount >= 0 && newCount <= resource.data.sizeStock[size];
+      }
+
+      // Old products (no sizeStock): only the total may change
       allow update: if signedIn()
+        && !('sizeStock' in resource.data)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock'])
-        && request.resource.data.stock is int
-        && request.resource.data.stock >= 0
-        && request.resource.data.stock < resource.data.stock;
+        && stockLowered();
+
+      // Products with sizeStock: only stock and sizeStock may change, the same sizes stay,
+      // and no size goes up
+      allow update: if signedIn()
+        && ('sizeStock' in resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'sizeStock'])
+        && request.resource.data.sizeStock is map
+        && request.resource.data.sizeStock.keys().hasOnly(resource.data.sizeStock.keys())
+        && resource.data.sizeStock.keys().hasOnly(request.resource.data.sizeStock.keys())
+        && resource.data.sizeStock.size() <= 12
+        && stockLowered()
+        && sizeLowered(0) && sizeLowered(1) && sizeLowered(2) && sizeLowered(3)
+        && sizeLowered(4) && sizeLowered(5) && sizeLowered(6) && sizeLowered(7)
+        && sizeLowered(8) && sizeLowered(9) && sizeLowered(10) && sizeLowered(11);
     }
 
     // Module 4: orders

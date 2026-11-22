@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useAuth } from './AuthContext'
+import { stockOfSize } from '../services/productService'
 
 // The cart is kept in the browser (localStorage), one cart per account,
 // so it is still there after a refresh. The stock is checked again at checkout.
@@ -45,15 +46,34 @@ function CartStore({ uid, children }) {
     return items.filter((i) => i.productId === productId).reduce((sum, i) => sum + i.quantity, 0)
   }
 
+  // Can this cart line hold `quantity`?
+  // perSize items (products with sizeStock): item.stock is the stock of that one size.
+  // Old products (no sizeStock): item.stock is the total, shared by all sizes in the cart.
+  function fits(item, quantity) {
+    if (item.perSize) return quantity <= item.stock
+    const otherSizes = quantityOfProduct(item.productId) - item.quantity
+    return otherSizes + quantity <= item.stock
+  }
+
+  const canIncrease = (key) => {
+    const item = items.find((i) => i.key === key)
+    return !!item && fits(item, item.quantity + 1)
+  }
+
   // Returns a message to show the customer
   function addToCart(product, size, unitPrice) {
-    if (quantityOfProduct(product.id) + 1 > product.stock) {
-      return { ok: false, message: `Only ${product.stock} in stock, and they are all in your cart.` }
-    }
     const key = `${product.id}|${size}`
     const existing = items.find((i) => i.key === key)
+    const perSize = !!product.sizeStock
+    const stock = stockOfSize(product, size) // the latest stock from the product page
+    const line = { ...(existing || { productId: product.id, quantity: 0 }), perSize, stock }
+    if (!fits(line, line.quantity + 1)) {
+      return perSize
+        ? { ok: false, message: `Only ${stock} left in size ${size}, and they are all in your cart.` }
+        : { ok: false, message: `Only ${stock} in stock, and they are all in your cart.` }
+    }
     if (existing) {
-      setItems(items.map((i) => (i.key === key ? { ...i, quantity: i.quantity + 1, stock: product.stock } : i)))
+      setItems(items.map((i) => (i.key === key ? { ...i, quantity: i.quantity + 1, stock, perSize } : i)))
     } else {
       setItems([
         ...items,
@@ -65,7 +85,8 @@ function CartStore({ uid, children }) {
           size,
           unitPrice,
           quantity: 1,
-          stock: product.stock,
+          stock,
+          perSize,
         },
       ])
     }
@@ -75,8 +96,7 @@ function CartStore({ uid, children }) {
   function changeQuantity(key, quantity) {
     const item = items.find((i) => i.key === key)
     if (!item || quantity < 1) return
-    const otherSizes = quantityOfProduct(item.productId) - item.quantity
-    if (otherSizes + quantity > item.stock) return // cannot go above the stock
+    if (quantity > item.quantity && !fits(item, quantity)) return // cannot go above the stock
     setItems(items.map((i) => (i.key === key ? { ...i, quantity } : i)))
   }
 
@@ -87,7 +107,7 @@ function CartStore({ uid, children }) {
   const count = items.reduce((sum, i) => sum + i.quantity, 0)
   const total = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0)
 
-  const value = { items, count, total, addToCart, changeQuantity, removeFromCart, clearCart }
+  const value = { items, count, total, addToCart, changeQuantity, canIncrease, removeFromCart, clearCart }
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }
 

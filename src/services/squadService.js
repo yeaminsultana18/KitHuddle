@@ -17,7 +17,7 @@ import {
 import { db } from '../firebase'
 import { formatPrice, salePrice } from './productService'
 import { ADMIN_INBOX, newNotification } from './notificationService'
-import { orderCode } from './orderService'
+import { changedStock, orderCode } from './orderService'
 
 // Squad discount: more members, bigger discount
 export function squadDiscount(memberCount) {
@@ -177,12 +177,22 @@ export async function placeSquadOrder({ squad, captain, delivery }) {
     if (!squadSnap.exists() || squadSnap.data().status !== 'open') throw new Error('This squad has already ordered.')
     if (!productSnap.exists()) throw new Error('This kit is no longer sold. Contact us for help.')
     const product = productSnap.data()
-    if (product.stock < members.length) {
+    const sizeCounts = countSizes(members) // e.g. { M: 4, L: 3 }
+
+    if (product.sizeStock) {
+      // Check every size the members chose, and list all the sizes that are short
+      const short = Object.entries(sizeCounts)
+        .filter(([size, count]) => (product.sizeStock[size] ?? 0) < count)
+        .map(([size, count]) => `${size} (${count} needed, ${product.sizeStock[size] ?? 0} left)`)
+      if (short.length > 0) {
+        throw new Error(`Not enough kits in size ${short.join(', ')}. Ask members to change size, or contact us for help.`)
+      }
+    } else if ((product.stock ?? 0) < members.length) {
+      // Old product: only a total
       throw new Error(`Only ${product.stock} kits left, but the squad has ${members.length} members. Contact us for help.`)
     }
 
     const unitPrice = squadSnap.data().unitPrice
-    const sizeCounts = countSizes(members)
     const items = Object.keys(sizeCounts).map((size) => ({
       productId: squad.productId,
       name: squad.productName,
@@ -195,7 +205,8 @@ export async function placeSquadOrder({ squad, captain, delivery }) {
     const discountPercent = squadDiscount(members.length)
     const total = Math.round(subtotal * (1 - discountPercent / 100))
 
-    tx.update(productRef, { stock: product.stock - members.length })
+    // Lower the stock of each size (and the total)
+    tx.update(productRef, changedStock(product, sizeCounts, -1))
     tx.set(orderRef, {
       type: 'squad',
       squadId: squad.id,

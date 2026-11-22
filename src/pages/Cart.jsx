@@ -3,7 +3,7 @@ import { useCart } from '../context/CartContext'
 import { formatPrice } from '../services/productService'
 
 export default function Cart() {
-  const { items, count, total, changeQuantity, removeFromCart } = useCart()
+  const { items, count, total, changeQuantity, canIncrease, removeFromCart } = useCart()
 
   if (items.length === 0) {
     return (
@@ -34,6 +34,11 @@ export default function Cart() {
               <div className="min-w-0 flex-1">
                 <Link to={`/products/${item.productId}`} className="font-semibold hover:text-brand-600">{item.name}</Link>
                 <p className="text-sm text-slate-600">Size {item.size} · {formatPrice(item.unitPrice)} each</p>
+                {!canIncrease(item.key) && (
+                  <p className="text-xs font-medium text-amber-700">
+                    {item.perSize ? `Only ${item.stock} left in size ${item.size}` : `Only ${item.stock} in stock`}
+                  </p>
+                )}
                 <button type="button" onClick={() => removeFromCart(item.key)} className="mt-2 text-sm text-red-700 hover:underline">
                   Remove
                 </button>
@@ -54,7 +59,8 @@ export default function Cart() {
                   type="button"
                   aria-label={`Increase quantity of ${item.name}`}
                   onClick={() => changeQuantity(item.key, item.quantity + 1)}
-                  className="h-11 w-11 text-xl text-brand-900"
+                  disabled={!canIncrease(item.key)}
+                  className="h-11 w-11 text-xl text-brand-900 disabled:opacity-30"
                 >
                   +
                 </button>
