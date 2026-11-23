@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
-import { formatPrice, getCategories, getProduct, salePrice, stockOfSize } from '../services/productService'
+import { formatPrice, getCategories, getProduct, isOnSale, salePrice, stockOfSize } from '../services/productService'
 import { addToWishlist, isInWishlist, removeFromWishlist } from '../services/wishlistService'
 import { chartFor } from '../services/sizeService'
 import SizeAdvisor from '../components/SizeAdvisor'
@@ -124,7 +124,7 @@ export default function ProductDetail() {
           </div>
           <p className="mt-2 flex items-baseline gap-3">
             <span className="text-3xl font-bold text-brand-600">{formatPrice(salePrice(product))}</span>
-            {product.salePercent > 0 && (
+            {isOnSale(product) && (
               <>
                 <span className="text-lg text-slate-500 line-through">{formatPrice(product.price)}</span>
                 <span className="rounded bg-gold px-2 py-0.5 text-sm font-bold text-amber-950">−{product.salePercent}%</span>

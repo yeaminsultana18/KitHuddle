@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Collection from './pages/Collection'
 import ProductDetail from './pages/ProductDetail'
+import OfferPage from './pages/OfferPage'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Profile from './pages/Profile'
@@ -19,6 +20,7 @@ import Checkout from './pages/Checkout'
 import MyOrders from './pages/MyOrders'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminCategories from './pages/admin/AdminCategories'
+import AdminOffers from './pages/admin/AdminOffers'
 import AdminOrders from './pages/admin/AdminOrders'
 import SquadOrders from './pages/SquadOrders'
 import SquadJoin from './pages/SquadJoin'
@@ -37,6 +39,7 @@ export default function App() {
         <Route path="/products" element={<Collection />} />
         <Route path="/category/:categoryId" element={<Collection />} />
         <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/offers/:offerId" element={<OfferPage />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
@@ -62,6 +65,7 @@ export default function App() {
        
         <Route path="products" element={<AdminProducts />} />
         <Route path="categories" element={<AdminCategories />} />
+        <Route path="offers" element={<AdminOffers />} />
         <Route path="orders" element={<AdminOrders />} />
         <Route path="squads" element={<AdminSquads />} />
         <Route path="chats" element={<AdminChats />} />

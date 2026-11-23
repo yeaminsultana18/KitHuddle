@@ -5,6 +5,7 @@ import {
   formatPrice,
   getCategories,
   getProducts,
+  isOnSale,
   placeholderImage,
   updateProduct,
 } from '../../services/productService'
@@ -216,7 +217,7 @@ export default function AdminProducts() {
                   <td className="px-4 py-3 text-slate-700">{categoryName(p.categoryId)}</td>
                   <td className="px-4 py-3">
                     {formatPrice(p.price)}
-                    {p.salePercent > 0 && <span className="ml-1 text-xs font-semibold text-amber-700">−{p.salePercent}%</span>}
+                    {isOnSale(p) && <span className="ml-1 text-xs font-semibold text-amber-700">−{p.salePercent}%</span>}
                   </td>
                   <td className={`px-4 py-3 font-semibold ${p.stock <= 0 ? 'text-red-700' : 'text-green-800'}`}>
                     {p.stock <= 0 ? 'Out of stock' : p.stock}

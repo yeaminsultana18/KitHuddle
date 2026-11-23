@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
-import { formatPrice, getCategories, getProducts, salePrice } from '../services/productService'
+import { formatPrice, getCategories, getProducts, isOnSale, salePrice } from '../services/productService'
 
 const SORTS = {
   featured: 'Featured',
@@ -106,7 +106,7 @@ export default function Collection() {
           <h1 className="font-display text-5xl tracking-wide">{title}</h1>
           <p className="mt-1 text-sm text-white/85">
             {shown.length} {shown.length === 1 ? 'product' : 'products'}
-            {base.some((p) => p.salePercent > 0) && ' · Sale prices on selected items'}
+            {base.some(isOnSale) && ' · Sale prices on selected items'}
           </p>
         </div>
         <label className="flex items-center gap-3 text-sm font-semibold text-white">

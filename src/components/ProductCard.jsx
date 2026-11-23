@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
-import { formatPrice, salePrice } from '../services/productService'
+import { formatPrice, isOnSale, salePrice } from '../services/productService'
 
 export default function ProductCard({ product }) {
   const outOfStock = product.stock <= 0
-  const onSale = product.salePercent > 0
+  const onSale = isOnSale(product)
 
   return (
     <Link to={`/products/${product.id}`} className="group flex flex-col gap-3">

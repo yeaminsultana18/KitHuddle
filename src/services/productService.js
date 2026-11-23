@@ -11,6 +11,7 @@ import {
   updateDoc,
 } from 'firebase/firestore'
 import { db } from '../firebase'
+import { todayString } from './offerService'
 
 export async function getProducts() {
   const snap = await getDocs(query(collection(db, 'products'), orderBy('name')))
@@ -27,9 +28,16 @@ export async function getCategories() {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
 }
 
-// The price the customer pays, after any sale
+// Is the product's sale running today?
+// A sale from an offer has saleEnds (the offer's last day, 'YYYY-MM-DD'). Once that day has passed,
+// the sale is ignored, so prices go back to normal by themselves even if nobody turns the offer off.
+// A sale typed in by hand on the Products page has no saleEnds, so it runs until it is set back to 0.
+export const isOnSale = (product) =>
+  product.salePercent > 0 && (!product.saleEnds || todayString() <= product.saleEnds)
+
+// The price the customer pays, after any sale (checkout uses this too, so it charges the same price)
 export const salePrice = (product) =>
-  product.salePercent > 0
+  isOnSale(product)
     ? Math.round(product.price * (1 - product.salePercent / 100))
     : product.price
 

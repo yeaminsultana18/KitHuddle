@@ -42,6 +42,9 @@ service cloud.firestore {
     // Anyone can see the catalog; only admins and the owner can change it
     match /categories/{id} { allow read: if true; allow write: if isAdmin(); }
 
+    // Offers (the Home page banners): anyone can see them; only admins and the owner can change them
+    match /offers/{id} { allow read: if true; allow write: if isAdmin(); }
+
     match /products/{id} {
       allow read: if true;
       allow write: if isAdmin();

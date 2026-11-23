@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import SportIcon from '../components/SportIcon'
+import OfferBanner from '../components/OfferBanner'
 import useCategories from '../hooks/useCategories'
 import { getProducts } from '../services/productService'
+import { getCurrentOffers } from '../services/offerService'
 
 const ROWS = [
   {
@@ -63,10 +65,64 @@ const INFO = [
 
 const glow = { textShadow: '0 0 18px rgba(140,184,255,0.85), 0 0 42px rgba(47,127,224,0.6)' }
 
+// The looks of the two usual banners: a kit photo, and the glowing blue "mega sale" look.
+// (Banners made from offers get their look in components/OfferBanner.jsx.)
+const PHOTO_STYLE = {
+  backgroundImage: "linear-gradient(180deg, rgba(5,11,26,0.35), rgba(5,11,26,0.55)), url('/kit-banner.jpg')",
+  backgroundPosition: '70% center',
+}
+const GLOW_STYLE = {
+  backgroundColor: '#0b1f42',
+  backgroundImage:
+    'repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 14px, rgba(0,0,0,0.12) 14px 28px), radial-gradient(circle at 50% 45%, #1f66c9 0%, #0f2a56 55%, #050b1a 100%)',
+}
+
+// The two banners the Home page had before offers existed (shown when there are no current offers)
+function DefaultBanners() {
+  return (
+    <>
+      <Link
+        to="/category/football?type=Jerseys"
+        className="flex aspect-[16/15] flex-col items-center justify-center gap-2 overflow-hidden rounded-lg bg-brand-900 bg-cover p-8 text-center text-white"
+        style={PHOTO_STYLE}
+      >
+        <span className="text-xs font-semibold tracking-[0.4em] text-slate-200">KITHUDDLE</span>
+        <span className="font-display text-5xl tracking-wider md:text-6xl lg:text-7xl">New season kits</span>
+        <span className="font-display text-8xl leading-[0.85] text-gold lg:text-[170px]">20% off</span>
+        <span className="font-display text-3xl tracking-wider lg:text-4xl">On all football jerseys</span>
+        <span className="mt-4 rounded-lg border-2 border-white px-6 py-1 font-display text-2xl tracking-wider lg:text-3xl">
+          Shop jerseys
+        </span>
+      </Link>
+
+      <Link
+        to="/products"
+        className="flex aspect-[16/15] flex-col items-center justify-center gap-1 overflow-hidden rounded-lg p-8 text-center text-white"
+        style={GLOW_STYLE}
+      >
+        <span className="font-display text-9xl leading-[0.85] lg:text-[200px]" style={glow}>12.12</span>
+        <span className="font-display text-6xl tracking-[0.1em] lg:text-[92px]" style={glow}>Mega sale</span>
+        <span className="mt-5 font-display text-3xl tracking-wider text-brand-100 lg:text-5xl">12 – 18 December</span>
+        <span className="mt-2 rounded-lg border-2 border-white/85 px-5 py-1 font-display text-2xl tracking-wider lg:text-3xl">
+          Up to 30% off · Cash on delivery
+        </span>
+      </Link>
+    </>
+  )
+}
+
 export default function Home() {
   const [counts, setCounts] = useState({})
   const [types, setTypes] = useState({}) // product types in each category
+  const [offers, setOffers] = useState(null) // null = still loading
   const categories = useCategories()
+
+  // The offers that are on today. If loading fails, show the usual banners.
+  useEffect(() => {
+    getCurrentOffers()
+      .then(setOffers)
+      .catch(() => setOffers([]))
+  }, [])
 
   useEffect(() => {
     getProducts()
@@ -106,40 +162,24 @@ export default function Home() {
     <div className="space-y-14">
       {/* Offer banners */}
       <section className="grid gap-5 md:grid-cols-2">
-        <Link
-          to="/category/football?type=Jerseys"
-          className="flex aspect-[16/15] flex-col items-center justify-center gap-2 overflow-hidden rounded-lg bg-brand-900 bg-cover p-8 text-center text-white"
-          style={{
-            backgroundImage:
-              "linear-gradient(180deg, rgba(5,11,26,0.35), rgba(5,11,26,0.55)), url('/kit-banner.jpg')",
-            backgroundPosition: '70% center',
-          }}
-        >
-          <span className="text-xs font-semibold tracking-[0.4em] text-slate-200">KITHUDDLE</span>
-          <span className="font-display text-5xl tracking-wider md:text-6xl lg:text-7xl">New season kits</span>
-          <span className="font-display text-8xl leading-[0.85] text-gold lg:text-[170px]">20% off</span>
-          <span className="font-display text-3xl tracking-wider lg:text-4xl">On all football jerseys</span>
-          <span className="mt-4 rounded-lg border-2 border-white px-6 py-1 font-display text-2xl tracking-wider lg:text-3xl">
-            Shop jerseys
-          </span>
-        </Link>
-
-        <Link
-          to="/products"
-          className="flex aspect-[16/15] flex-col items-center justify-center gap-1 overflow-hidden rounded-lg p-8 text-center text-white"
-          style={{
-            backgroundColor: '#0b1f42',
-            backgroundImage:
-              'repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 14px, rgba(0,0,0,0.12) 14px 28px), radial-gradient(circle at 50% 45%, #1f66c9 0%, #0f2a56 55%, #050b1a 100%)',
-          }}
-        >
-          <span className="font-display text-9xl leading-[0.85] lg:text-[200px]" style={glow}>12.12</span>
-          <span className="font-display text-6xl tracking-[0.1em] lg:text-[92px]" style={glow}>Mega sale</span>
-          <span className="mt-5 font-display text-3xl tracking-wider text-brand-100 lg:text-5xl">12 – 18 December</span>
-          <span className="mt-2 rounded-lg border-2 border-white/85 px-5 py-1 font-display text-2xl tracking-wider lg:text-3xl">
-            Up to 30% off · Cash on delivery
-          </span>
-        </Link>
+        {offers === null ? (
+          // Loading: two empty blocks the same size, so the page does not jump
+          <>
+            <div className="aspect-[16/15] animate-pulse rounded-lg bg-brand-900" />
+            <div className="aspect-[16/15] animate-pulse rounded-lg bg-brand-900" />
+          </>
+        ) : offers.length === 0 ? (
+          <DefaultBanners />
+        ) : (
+          offers.map((offer, i) => (
+            <OfferBanner
+              key={offer.id}
+              offer={offer}
+              // The last banner fills the row when the number of offers is odd
+              wide={offers.length % 2 === 1 && i === offers.length - 1}
+            />
+          ))
+        )}
       </section>
 
       {/* One row per sport */}
