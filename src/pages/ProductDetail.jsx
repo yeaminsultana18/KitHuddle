@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
@@ -6,6 +6,7 @@ import { formatPrice, getCategories, getProduct, isOnSale, salePrice, stockOfSiz
 import { addToWishlist, isInWishlist, removeFromWishlist } from '../services/wishlistService'
 import { chartFor } from '../services/sizeService'
 import SizeAdvisor from '../components/SizeAdvisor'
+import TryOnModal from '../components/TryOnModal'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -23,6 +24,9 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false)
   const [saved, setSaved] = useState(false) // in the wishlist?
   const [showAdvisor, setShowAdvisor] = useState(false)
+  const [showTryOn, setShowTryOn] = useState(false) // Module 7: the try-on window is open
+  // useCallback keeps the same function between renders, so the window doesn't re-run its setup
+  const closeTryOn = useCallback(() => setShowTryOn(false), [])
 
   useEffect(() => {
     Promise.all([getProduct(id), getCategories()])
@@ -100,8 +104,24 @@ export default function ProductDetail() {
       </Link>
 
       <div className="grid gap-6 rounded-lg bg-white p-4 shadow md:grid-cols-2 md:p-6">
-        <div className="aspect-square overflow-hidden rounded-lg bg-gray-100">
-          <img src={product.imageUrls?.[0]} alt={product.name} className="h-full w-full object-cover" />
+        <div>
+          <div className="aspect-square overflow-hidden rounded-lg bg-gray-100">
+            <img src={product.imageUrls?.[0]} alt={product.name} className="h-full w-full object-cover" />
+          </div>
+          {/* Module 7: only products with a try-on picture get the button (hasTryOn is set by the admin page) */}
+          {product.hasTryOn && (
+            <button
+              type="button"
+              onClick={() => setShowTryOn(true)}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-brand-600 py-3 font-semibold text-brand-700 hover:bg-brand-50"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+                <circle cx="12" cy="13" r="3.5" />
+              </svg>
+              Try it on
+            </button>
+          )}
         </div>
 
         <div>
@@ -198,6 +218,8 @@ export default function ProductDetail() {
           )}
         </div>
       </div>
+
+      {showTryOn && <TryOnModal product={product} onClose={closeTryOn} />}
     </div>
   )
 }

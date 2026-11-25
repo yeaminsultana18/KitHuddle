@@ -45,6 +45,15 @@ service cloud.firestore {
     // Offers (the Home page banners): anyone can see them; only admins and the owner can change them
     match /offers/{id} { allow read: if true; allow write: if isAdmin(); }
 
+    // Module 7: try-on pictures (one see-through PNG per product, kept apart from the product).
+    // Anyone can see them (guests can try on too); only admins and the owner can add, change or remove them.
+    match /tryOnImages/{productId} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+        && request.resource.data.image is string;
+      allow delete: if isAdmin();
+    }
+
     match /products/{id} {
       allow read: if true;
       allow write: if isAdmin();

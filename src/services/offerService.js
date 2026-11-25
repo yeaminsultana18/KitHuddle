@@ -32,7 +32,8 @@ const MAX_WIDTH = 1200
 const MAX_BYTES = 300 * 1024
 
 // Opens the file as a picture the browser can draw. Fails if the file is not a real image.
-function loadImage(file) {
+// (Also used by tryOnService.js for the try-on pictures.)
+export function loadImage(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()

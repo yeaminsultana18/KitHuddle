@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   addProduct,
   deleteProduct,
@@ -11,6 +11,16 @@ import {
 } from '../../services/productService'
 import { authErrorMessage } from '../../services/authService'
 import { chartToText, textToChart } from '../../services/sizeService'
+import {
+  deleteTryOnImage,
+  getTryOn,
+  removeTryOnImage,
+  saveTryOnImage,
+  shrinkTryOnImage,
+  tryOnSizeKB,
+} from '../../services/tryOnService'
+import { cleanFit, DEFAULT_FIT } from '../../components/tryOnFit'
+import TryOnPreview from '../../components/TryOnPreview'
 
 const input = 'mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-normal'
 
@@ -55,6 +65,14 @@ export default function AdminProducts() {
   const [formOpen, setFormOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
+  // Module 7: the try-on picture is kept apart from `form`, because it lives in its own collection.
+  // image: data URL or '' (none) · fit: the size and up/down settings saved with it
+  // changed: the admin picked, removed or adjusted it, so it must be saved
+  // loading: fetching the saved picture · shrinking: making a new picture smaller
+  const NO_TRY_ON = { image: '', fit: DEFAULT_FIT, changed: false, loading: false, shrinking: false }
+  const [tryOn, setTryOn] = useState(NO_TRY_ON)
+  const editingRef = useRef(null) // which product the form shows, so a slow download can't land on the wrong one
+
   // The sizes typed in the Sizes field; there is one stock box for each
   const formSizes = form.sizes.split(',').map((s) => s.trim()).filter(Boolean)
   function load() {
@@ -76,20 +94,52 @@ export default function AdminProducts() {
 
   function startAdding() {
     setEditingId(null)
+    editingRef.current = null
     setForm({ ...EMPTY_FORM, categoryId: categories[0]?.id || '' })
+    setTryOn(NO_TRY_ON)
     setFormOpen(true)
     setMessage(null)
   }
 
   function startEditing(product) {
     setEditingId(product.id)
+    editingRef.current = product.id
     setForm(productToForm(product))
     setFormOpen(true)
     setMessage(null)
+
+    // Download the saved try-on picture only when the product has one
+    setTryOn({ ...NO_TRY_ON, loading: !!product.hasTryOn })
+    if (product.hasTryOn) {
+      getTryOn(product.id)
+        .then((saved) => {
+          if (editingRef.current !== product.id) return // the admin has opened another product meanwhile
+          setTryOn((t) => (t.changed ? t : { ...t, image: saved?.image || '', fit: cleanFit(saved?.fit), loading: false }))
+        })
+        .catch(() => setTryOn((t) => ({ ...t, loading: false })))
+    }
+  }
+
+  // The admin picked a try-on PNG: shrink it and keep it until Save is clicked
+  async function handleTryOnFile(e) {
+    const file = e.target.files[0]
+    e.target.value = '' // so choosing the same file again still works
+    if (!file) return
+    setMessage(null)
+    setTryOn((t) => ({ ...t, shrinking: true }))
+    try {
+      const image = await shrinkTryOnImage(file)
+      setTryOn((t) => ({ ...t, image, changed: true, loading: false, shrinking: false })) // keeps the fit settings
+    } catch (err) {
+      setTryOn((t) => ({ ...t, shrinking: false }))
+      setMessage({ type: 'error', text: err.message })
+    }
   }
 
   const update = (e) => setForm({ ...form, [e.target.name]: e.target.value })
   const updateSizeStock = (size, value) => setForm({ ...form, sizeStock: { ...form.sizeStock, [size]: value } })
+  // A try-on fit slider moved: size (80–130%) or offsetY (−20 to 20%)
+  const updateFit = (key, value) => setTryOn((t) => ({ ...t, fit: { ...t.fit, [key]: Number(value) }, changed: true }))
 
   async function handleSave(e) {
     e.preventDefault()
@@ -142,12 +192,24 @@ export default function AdminProducts() {
 
     setBusy(true)
     try {
+      let id = editingId
       if (editingId) {
         await updateProduct(editingId, data)
         setMessage({ type: 'success', text: `${data.name} saved.` })
       } else {
-        await addProduct(data)
+        id = await addProduct(data)
         setMessage({ type: 'success', text: `${data.name} added to the shop.` })
+      }
+
+      // Then the try-on picture, only if the admin picked or removed one
+      const hadTryOn = !!products.find((p) => p.id === id)?.hasTryOn
+      if (tryOn.changed && (tryOn.image || hadTryOn)) {
+        try {
+          if (tryOn.image) await saveTryOnImage(id, tryOn.image, cleanFit(tryOn.fit))
+          else await removeTryOnImage(id)
+        } catch (err) {
+          setMessage({ type: 'error', text: `${data.name} was saved, but the try-on image was not: ${authErrorMessage(err)}` })
+        }
       }
       setFormOpen(false)
       await load()
@@ -162,6 +224,7 @@ export default function AdminProducts() {
     if (!window.confirm(`Delete ${product.name}? Customers will no longer see it.`)) return
     setMessage(null)
     try {
+      if (product.hasTryOn) await deleteTryOnImage(product.id) // first, so it never stays behind on its own
       await deleteProduct(product.id)
       if (editingId === product.id) setFormOpen(false)
       setMessage({ type: 'success', text: `${product.name} deleted.` })
@@ -213,6 +276,7 @@ export default function AdminProducts() {
                   <td className="px-4 py-3">
                     <p className="font-semibold">{p.name}</p>
                     <p className="text-xs text-slate-500">{p.brand}{p.type ? ` · ${p.type}` : ''}</p>
+                    {p.hasTryOn && <p className="text-xs font-semibold text-brand-700">Try-on ready</p>}
                   </td>
                   <td className="px-4 py-3 text-slate-700">{categoryName(p.categoryId)}</td>
                   <td className="px-4 py-3">
@@ -303,6 +367,74 @@ export default function AdminProducts() {
               Image link (optional)
               <input name="imageUrl" value={form.imageUrl} onChange={update} placeholder="https://..." className={input} />
             </label>
+            {/* Module 7: the see-through jersey picture for the virtual try-on */}
+            <div className="text-sm">
+              <p className="font-semibold text-slate-700">Try-on image (optional)</p>
+              {tryOn.loading ? (
+                <p className="mt-1 text-slate-500">Loading...</p>
+              ) : (
+                <div className="mt-1.5 flex flex-wrap items-center gap-3">
+                  {tryOn.image && (
+                    // Live preview on a dummy body, with the same fitting as the real try-on, plus the fit settings
+                    <div className="flex w-full items-start gap-3">
+                      <TryOnPreview image={tryOn.image} fit={tryOn.fit} />
+                      <div className="min-w-0 flex-1 space-y-3">
+                        <label className="block text-xs font-semibold text-slate-600">
+                          Size: {tryOn.fit.size}%
+                          <input
+                            type="range"
+                            min="80"
+                            max="130"
+                            step="1"
+                            value={tryOn.fit.size}
+                            onChange={(e) => updateFit('size', e.target.value)}
+                            className="mt-1 w-full accent-brand-600"
+                          />
+                        </label>
+                        <label className="block text-xs font-semibold text-slate-600">
+                          Move: {tryOn.fit.offsetY === 0 ? 'centred' : `${Math.abs(tryOn.fit.offsetY)}% ${tryOn.fit.offsetY < 0 ? 'up' : 'down'}`}
+                          <input
+                            type="range"
+                            min="-20"
+                            max="20"
+                            step="1"
+                            value={tryOn.fit.offsetY}
+                            onChange={(e) => updateFit('offsetY', e.target.value)}
+                            className="mt-1 w-full accent-brand-600"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setTryOn((t) => ({ ...t, fit: DEFAULT_FIT, changed: true }))}
+                          className="text-xs font-semibold text-brand-600 underline"
+                        >
+                          Reset fit
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <label className="cursor-pointer rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5 hover:border-brand-600">
+                    {tryOn.shrinking ? 'Making it smaller...' : tryOn.image ? 'Choose a different PNG' : 'Choose a PNG'}
+                    <input type="file" accept="image/png,image/webp" onChange={handleTryOnFile} disabled={tryOn.shrinking} className="sr-only" />
+                  </label>
+                  {tryOn.image && (
+                    <>
+                      <span className="text-slate-500">{tryOnSizeKB(tryOn.image)} KB</span>
+                      <button
+                        type="button"
+                        onClick={() => setTryOn({ ...NO_TRY_ON, changed: true })}
+                        className="rounded-lg border border-red-200 px-3 py-2 text-red-700 hover:bg-red-50"
+                      >
+                        Remove
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+              <p className="mt-1 text-xs text-slate-500">
+                A front view of the jersey on a transparent background, It is made smaller (at most 600px wide); empty see-through edges are ignored when fitting. Adjust the size and position until the shoulders match the dummy, then click Save.
+              </p>
+            </div>
             <label className="block text-sm font-semibold text-slate-700">
               Description
               <textarea name="description" rows="2" value={form.description} onChange={update} className={input} />
@@ -315,7 +447,7 @@ export default function AdminProducts() {
               <textarea name="sizeChart" rows="4" value={form.sizeChart} onChange={update} placeholder={'S, 150, 165, 40, 58\nM, 165, 175, 58, 70'} className={`${input} font-mono`} />
             </label>
             <div className="flex gap-3">
-              <button disabled={busy} className="flex-1 rounded-lg bg-brand-600 py-2.5 font-semibold text-white disabled:opacity-60">
+              <button disabled={busy || tryOn.loading || tryOn.shrinking} className="flex-1 rounded-lg bg-brand-600 py-2.5 font-semibold text-white disabled:opacity-60">
                 {busy ? 'Saving...' : editingId ? 'Save changes' : 'Add product'}
               </button>
               <button type="button" onClick={() => setFormOpen(false)} className="flex-1 rounded-lg border border-slate-300 py-2.5">
